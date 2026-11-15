@@ -1853,6 +1853,8 @@ def admin_audit_logs():
     return jsonify(logs), 200
 
 
-# Start the local development server
+# Application Entry Point
 if __name__ == "__main__":
-    app.run(host="0.0.0.0", port=5000, debug=True)
+    port = int(os.environ.get("PORT", 5000))
+    is_production = os.environ.get("FLASK_ENV") == "production" or os.environ.get("RENDER") is not None
+    app.run(host="0.0.0.0", port=port, debug=not is_production)

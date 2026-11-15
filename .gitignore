@@ -81,3 +81,5 @@ _legacy_irrigation_backup/
 scratch/
 data/tts_cache/
 data/irrigation_schedules.db
+*.db
+!_legacy_project/agro_intelligence.db
