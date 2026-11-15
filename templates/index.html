@@ -316,7 +316,7 @@
                     <p id="activeSecSub">Independent irrigation calculation & schedule for this land section</p>
                 </div>
                 <div class="active-sec-right">
-                    <span class="crop-age-chip" id="activeSecAgeChip">🌱 Sown: 35 days ago (Tillering)</span>
+                    <span class="crop-age-chip" id="activeSecAgeChip" style="display: none;"></span>
                     <button type="button" id="btnEditCurrentSection" class="btn-sec-quick-edit" title="Edit this section's parameters">✏️ Edit Section</button>
                 </div>
             </div>
@@ -374,7 +374,8 @@
                         </label>
                         <div class="growth-stage-display-wrap" style="display: flex; align-items: center; gap: 8px; padding: 11px 14px; background: #f8fafc; border: 1.5px solid #cbd5e1; border-radius: 10px; min-height: 44px; box-sizing: border-box;">
                             <span aria-hidden="true">🌱</span>
-                            <span id="calculatedCropAgeBadge" class="calculated-age-badge" style="background: rgba(34, 197, 94, 0.12); color: #166534; font-weight: 700; padding: 4px 10px; border-radius: 6px; font-size: 13px;">35 days (Tillering)</span>
+                            <span id="calculatedCropAgeBadge" class="calculated-age-badge" style="display: none; background: rgba(34, 197, 94, 0.12); color: #166534; font-weight: 700; padding: 4px 10px; border-radius: 6px; font-size: 13px;"></span>
+                            <span id="calculatedCropAgePlaceholder" style="color: #64748b; font-size: 13px;">Auto-calculated from sowing date</span>
                         </div>
                     </div>
                 </div>

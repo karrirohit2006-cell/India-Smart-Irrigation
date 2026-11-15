@@ -176,9 +176,11 @@
 
     // Tab Navigation
     function switchTab(tabName) {
+        if (tabName === "farmers") tabName = "overview";
         currentTab = tabName;
         el.navItems.forEach(item => {
-            if (item.getAttribute("data-tab") === tabName) {
+            const itemTab = item.getAttribute("data-tab");
+            if (itemTab === tabName || (tabName === "overview" && itemTab === "farmers")) {
                 item.classList.add("active");
             } else {
                 item.classList.remove("active");
@@ -194,8 +196,10 @@
         });
 
         // Trigger on-demand loads
-        if (tabName === "overview") loadKPIs();
-        else if (tabName === "farmers") loadFarmers();
+        if (tabName === "overview") {
+            loadKPIs();
+            loadFarmers();
+        }
         else if (tabName === "farms") loadFarms();
         else if (tabName === "schedules") loadSchedules();
         else if (tabName === "weather") loadWeather();
@@ -359,19 +363,27 @@
         el.farmersTableBody.innerHTML = "";
 
         if (!farmers || farmers.length === 0) {
-            if (el.farmersEmptyNotice) el.farmersEmptyNotice.style.display = "block";
+            if (el.farmersEmptyNotice) {
+                el.farmersEmptyNotice.innerHTML = `
+                    <div class="empty-state-wrap" style="padding: 32px 16px; text-align: center;">
+                        <span style="font-size: 32px; display: block; margin-bottom: 8px;">👨‍🌾</span>
+                        <h3 style="margin: 0 0 6px 0; font-size: 16px; color: #1e293b;">No registered farmers yet.</h3>
+                        <p style="margin: 0; font-size: 13px; color: #64748b;">Farmers who create accounts via the Create Account / Register page will be displayed here automatically.</p>
+                    </div>
+                `;
+                el.farmersEmptyNotice.style.display = "block";
+            }
             return;
         }
         if (el.farmersEmptyNotice) el.farmersEmptyNotice.style.display = "none";
 
         farmers.forEach(f => {
             const tr = document.createElement("tr");
+            tr.style.cursor = "pointer";
             const isSuspended = (f.status || "Active").toLowerCase() === "suspended";
             const statusBadge = isSuspended
                 ? `<span class="badge badge-suspended">Suspended</span>`
                 : `<span class="badge badge-active">Active</span>`;
-
-            const cropsHtml = (f.active_crops || []).map(c => `<span class="crop-chip">${escapeHtml(c)}</span>`).join(" ") || "<span class='text-muted'>None</span>";
 
             tr.innerHTML = `
                 <td><code>${escapeHtml(f.id)}</code></td>
@@ -379,54 +391,104 @@
                     <div class="farmer-cell">
                         <span class="farmer-avatar-sm">👨‍🌾</span>
                         <div>
-                            <strong>${escapeHtml(f.name)}</strong>
-                            <small class="text-muted">Registered ${escapeHtml(formatDateTime(f.created_at))}</small>
+                            <strong>${escapeHtml(f.name || "--")}</strong>
                         </div>
                     </div>
                 </td>
-                <td>
-                    <div>📞 ${escapeHtml(f.phone || "--")}</div>
-                    <small class="text-muted">✉️ ${escapeHtml(f.email || "No email")}</small>
-                </td>
-                <td>
-                    <strong>${escapeHtml(f.state || "--")}</strong>
-                    <small class="text-muted d-block">${escapeHtml(f.village || "")}${f.district ? `, ${escapeHtml(f.district)}` : ""}</small>
-                </td>
-                <td><strong>${f.farms_count || 1}</strong></td>
-                <td><strong>${(f.total_land || 0).toFixed(2)} Ac</strong></td>
-                <td>${f.sections_count || 0}</td>
-                <td>${cropsHtml}</td>
+                <td><code>${escapeHtml(f.username || "--")}</code></td>
+                <td>${escapeHtml(f.email || "--")}</td>
+                <td>${escapeHtml(f.phone || "--")}</td>
+                <td>${escapeHtml(formatDateTime(f.created_at))}</td>
                 <td>${statusBadge}</td>
+                <td>${escapeHtml(formatDateTime(f.last_login_at))}</td>
                 <td class="text-right">
                     <div class="action-btn-group">
-                        <button type="button" class="btn-table-action btn-inspect" data-id="${f.id}" title="Inspect Details">
-                            🔍 Inspect
-                        </button>
-                        <button type="button" class="btn-table-action btn-impersonate" data-id="${f.id}" data-name="${escapeHtml(f.name)}" title="Open Farmer Dashboard">
-                            ⚠️ Open
+                        <button type="button" class="btn-table-action btn-inspect" data-id="${f.id}" title="View Details">
+                            👁️ Details
                         </button>
                         <button type="button" class="btn-table-action btn-edit" data-id="${f.id}" title="Edit Farmer Profile">
-                            ✏️
+                            ✏️ Edit
                         </button>
-                        <button type="button" class="btn-table-action btn-reset-pwd" data-id="${f.id}" data-name="${escapeHtml(f.name)}" title="Reset Password">
-                            🔑
+                        <button type="button" class="btn-table-action btn-delete" data-id="${f.id}" data-name="${escapeHtml(f.name)}" title="Delete Farmer Account">
+                            🗑️ Delete
                         </button>
                         <button type="button" class="btn-table-action ${isSuspended ? 'btn-activate' : 'btn-suspend'}" data-id="${f.id}" data-status="${f.status || 'Active'}" title="${isSuspended ? 'Reactivate Account' : 'Suspend Account'}">
                             ${isSuspended ? '✅' : '🚫'}
+                        </button>
+                        <button type="button" class="btn-table-action btn-reset-pwd" data-id="${f.id}" data-name="${escapeHtml(f.name)}" title="Reset Password">
+                            🔑
                         </button>
                     </div>
                 </td>
             `;
 
-            // Attach listeners to row buttons
-            tr.querySelector(".btn-inspect").addEventListener("click", () => openInspectModal(f.id));
-            tr.querySelector(".btn-impersonate").addEventListener("click", () => openImpersonationModal(f.id, f.name));
-            tr.querySelector(".btn-edit").addEventListener("click", () => openEditModal(f));
-            tr.querySelector(".btn-reset-pwd").addEventListener("click", () => openResetPasswordModal(f.id, f.name));
-            tr.querySelector(isSuspended ? ".btn-activate" : ".btn-suspend").addEventListener("click", () => toggleFarmerStatus(f.id, f.status || "Active", f.name));
+            // Clicking row (except on action buttons) opens details
+            tr.addEventListener("click", (e) => {
+                if (e.target.closest("button") || e.target.closest("a")) return;
+                openInspectModal(f.id);
+            });
+
+            // Action button listeners with stopPropagation
+            const btnInspect = tr.querySelector(".btn-inspect");
+            if (btnInspect) {
+                btnInspect.addEventListener("click", (e) => {
+                    e.stopPropagation();
+                    openInspectModal(f.id);
+                });
+            }
+            const btnEdit = tr.querySelector(".btn-edit");
+            if (btnEdit) {
+                btnEdit.addEventListener("click", (e) => {
+                    e.stopPropagation();
+                    openEditModal(f);
+                });
+            }
+            const btnDelete = tr.querySelector(".btn-delete");
+            if (btnDelete) {
+                btnDelete.addEventListener("click", (e) => {
+                    e.stopPropagation();
+                    deleteFarmer(f.id, f.name, f.username);
+                });
+            }
+            const btnToggle = tr.querySelector(isSuspended ? ".btn-activate" : ".btn-suspend");
+            if (btnToggle) {
+                btnToggle.addEventListener("click", (e) => {
+                    e.stopPropagation();
+                    toggleFarmerStatus(f.id, f.status || "Active", f.name);
+                });
+            }
+            const btnReset = tr.querySelector(".btn-reset-pwd");
+            if (btnReset) {
+                btnReset.addEventListener("click", (e) => {
+                    e.stopPropagation();
+                    openResetPasswordModal(f.id, f.name);
+                });
+            }
 
             el.farmersTableBody.appendChild(tr);
         });
+    }
+
+    async function deleteFarmer(farmerId, farmerName, farmerUsername) {
+        const confirmMsg = `Are you sure you want to permanently delete farmer '${farmerName || farmerId}' (@${farmerUsername || ''})?\n\nThis will remove all their farms, land sections, and irrigation schedules permanently. This action cannot be undone.`;
+        if (!confirm(confirmMsg)) return;
+
+        try {
+            const res = await fetch(`/api/admin/farmers/${encodeURIComponent(farmerId)}`, {
+                method: "DELETE",
+                headers: { "Content-Type": "application/json" }
+            });
+            const data = await res.json();
+            if (res.ok && data.success) {
+                loadKPIs();
+                loadFarmers();
+            } else {
+                alert(`Failed to delete farmer: ${data.error || 'Server error'}`);
+            }
+        } catch (err) {
+            console.error("Delete farmer error:", err);
+            alert("Error deleting farmer account.");
+        }
     }
 
     if (el.farmerSearchInput) el.farmerSearchInput.addEventListener("input", debounce(loadFarmers, 300));
@@ -491,25 +553,28 @@
             el.inspectModalBody.innerHTML = `
                 <div class="inspect-grid">
                     <div class="inspect-card">
-                        <h4>👤 Farmer Profile</h4>
+                        <h4>📋 Registered Account Information</h4>
                         <table class="inspect-table">
-                            <tr><th>Name</th><td><strong>${escapeHtml(f.name)}</strong></td></tr>
-                            <tr><th>Mobile Phone</th><td>${escapeHtml(f.phone)}</td></tr>
-                            <tr><th>Email</th><td>${escapeHtml(f.email || "Not provided")}</td></tr>
-                            <tr><th>Location</th><td>${escapeHtml(f.village || "")}, ${escapeHtml(f.district || "")}, ${escapeHtml(f.state)}</td></tr>
-                            <tr><th>Status</th><td><strong>${escapeHtml(f.status || "Active")}</strong> ${f.suspend_reason ? `(${escapeHtml(f.suspend_reason)})` : ""}</td></tr>
+                            <tr><th>Farmer ID</th><td><code>${escapeHtml(f.id)}</code></td></tr>
+                            <tr><th>Farmer Name</th><td><strong>${escapeHtml(f.name || "--")}</strong></td></tr>
+                            <tr><th>Username</th><td><code>${escapeHtml(f.username || "--")}</code></td></tr>
+                            <tr><th>Email</th><td>${escapeHtml(f.email || "--")}</td></tr>
+                            <tr><th>Mobile Number</th><td>${escapeHtml(f.phone || "--")}</td></tr>
+                            <tr><th>Registration Date</th><td>${escapeHtml(formatDateTime(f.created_at))}</td></tr>
+                            <tr><th>Account Status</th><td><strong>${escapeHtml(f.status || "Active")}</strong> ${f.suspend_reason ? `(${escapeHtml(f.suspend_reason)})` : ""}</td></tr>
                             <tr><th>Last Login</th><td>${escapeHtml(formatDateTime(f.last_login_at))}</td></tr>
                         </table>
                     </div>
 
                     <div class="inspect-card">
-                        <h4>🏡 Agricultural Holdings</h4>
+                        <h4>🏡 Farmer Profile & Agricultural Holdings</h4>
                         <table class="inspect-table">
+                            <tr><th>Location</th><td>${escapeHtml(f.village || "")}${f.district ? `, ${escapeHtml(f.district)}` : ""}, ${escapeHtml(f.state || "--")}</td></tr>
                             <tr><th>Total Farms</th><td>${farms.length}</td></tr>
-                            <tr><th>Farm Name</th><td>${escapeHtml(farms[0]?.name || "Primary Farm")}</td></tr>
-                            <tr><th>Total Land</th><td><strong>${farms[0]?.total_area_acres || 0} ${farms[0]?.unit || "Acres"}</strong></td></tr>
+                            <tr><th>Primary Farm</th><td>${escapeHtml(farms[0]?.name || "Primary Farm")}</td></tr>
+                            <tr><th>Total Land Area</th><td><strong>${farms[0]?.total_area_acres || 0} ${farms[0]?.unit || "Acres"}</strong></td></tr>
                             <tr><th>GPS Coordinates</th><td><code>${farms[0]?.latitude || 0}, ${farms[0]?.longitude || 0}</code></td></tr>
-                            <tr><th>Land Sections</th><td>${sections.length} sections (${sections.filter(s => !s.is_empty).length} cultivated, ${sections.filter(s => s.is_empty).length} empty)</td></tr>
+                            <tr><th>Land Sections</th><td>${sections.length} configured (${sections.filter(s => !s.is_empty).length} cultivated, ${sections.filter(s => s.is_empty).length} empty)</td></tr>
                         </table>
                     </div>
                 </div>

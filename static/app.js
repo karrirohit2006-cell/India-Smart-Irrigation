@@ -769,11 +769,14 @@ if (languageSelect) {
 // ----------------------------------------------------
 // Prediction History Management
 // ----------------------------------------------------
-const PREDICTION_HISTORY_KEY = "agri_prediction_history";
+function getPredictionHistoryKey() {
+    const fid = (window.currentFarmer && window.currentFarmer.id) ? window.currentFarmer.id : "guest";
+    return `agri_prediction_history_${fid}`;
+}
 
 function getPredictionHistory() {
     try {
-        const stored = localStorage.getItem(PREDICTION_HISTORY_KEY);
+        const stored = localStorage.getItem(getPredictionHistoryKey());
         return stored ? JSON.parse(stored) : [];
     } catch (e) {
         return [];
@@ -785,7 +788,7 @@ function savePredictionToHistory(item) {
         const history = getPredictionHistory();
         history.unshift(item);
         if (history.length > 30) history.pop();
-        localStorage.setItem(PREDICTION_HISTORY_KEY, JSON.stringify(history));
+        localStorage.setItem(getPredictionHistoryKey(), JSON.stringify(history));
     } catch (e) {
         console.warn("Failed to persist prediction history:", e);
     }
@@ -870,7 +873,7 @@ function closePredictionHistory() {
 
 function clearAllPredictionHistory() {
     if (confirm("Are you sure you want to clear your prediction history?")) {
-        localStorage.removeItem(PREDICTION_HISTORY_KEY);
+        localStorage.removeItem(getPredictionHistoryKey());
         renderPredictionHistory();
     }
 }
@@ -1520,9 +1523,10 @@ function showNoIrrigationUI(reason) {
     if (noIrrigationCard) {
         noIrrigationCard.style.display = "flex";
         if (noIrrigationReason) {
-            noIrrigationReason.textContent = reason || "Current soil conditions are sufficient. Your next irrigation recommendation will be generated when conditions change.";
+            noIrrigationReason.textContent = reason || "No irrigation schedule available yet. Calculate irrigation requirements above to generate a schedule.";
         }
     }
+    appSchedules = [];
     updatePendingBadge();
 }
 
@@ -1555,10 +1559,13 @@ async function initSchedulerFromBackend() {
 
                 renderDualCalendars();
                 selectDate(selectedDateStr);
+            } else {
+                showNoIrrigationUI("No irrigation schedule available yet. Calculate irrigation requirements above to generate a schedule.");
             }
         }
     } catch (e) {
         console.warn("Could not fetch existing schedules:", e);
+        showNoIrrigationUI("No irrigation schedule available yet. Calculate irrigation requirements above to generate a schedule.");
     }
 }
 
@@ -2008,9 +2015,16 @@ function selectSection(sectionId) {
             : `Independent irrigation calculations scaled for ${sec.area_acres.toFixed(2)} acre`;
     }
     if (activeSecAgeChip) {
-        activeSecAgeChip.textContent = sec.is_empty 
-            ? "🌱 Uncultivated" 
-            : `🌱 Age: ${sec.crop_age_days} days (${sec.growth_stage || "Active"})`;
+        if (sec.is_empty) {
+            activeSecAgeChip.style.display = "inline-flex";
+            activeSecAgeChip.textContent = "🌱 Uncultivated";
+        } else if (sec.crop_age_days) {
+            activeSecAgeChip.style.display = "inline-flex";
+            activeSecAgeChip.textContent = `🌱 Age: ${sec.crop_age_days} days (${sec.growth_stage || "Active"})`;
+        } else {
+            activeSecAgeChip.style.display = "none";
+            activeSecAgeChip.textContent = "";
+        }
     }
 
     // Populate Form Inputs
@@ -2018,7 +2032,20 @@ function selectSection(sectionId) {
     if (sowingDateInput) {
         sowingDateInput.value = sec.sowing_date || "";
         if (calculatedCropAgeBadge) {
-            calculatedCropAgeBadge.textContent = sec.is_empty ? "Uncultivated" : `${sec.crop_age_days} days (${sec.growth_stage || "Active"})`;
+            const placeholder = document.getElementById("calculatedCropAgePlaceholder");
+            if (sec.is_empty) {
+                calculatedCropAgeBadge.style.display = "inline-block";
+                calculatedCropAgeBadge.textContent = "Uncultivated";
+                if (placeholder) placeholder.style.display = "none";
+            } else if (sec.crop_age_days) {
+                calculatedCropAgeBadge.style.display = "inline-block";
+                calculatedCropAgeBadge.textContent = `${sec.crop_age_days} days (${sec.growth_stage || "Active"})`;
+                if (placeholder) placeholder.style.display = "none";
+            } else {
+                calculatedCropAgeBadge.style.display = "none";
+                calculatedCropAgeBadge.textContent = "";
+                if (placeholder) placeholder.style.display = "inline";
+            }
         }
     }
 
@@ -2069,8 +2096,8 @@ async function loadSectionSchedules(sectionId) {
         if (scheds.length > 0) {
             updateSchedulerUI(scheds, scheds[0].water_quantity_liters);
         } else {
-            // Predict for this section to generate initial schedule
-            predictActiveSection();
+            // Clean initial empty state: no schedule generated yet for this section!
+            showNoIrrigationUI("No irrigation schedule available yet. Calculate irrigation requirements above to generate a schedule.");
         }
     } catch (e) {
         console.warn("Could not load section schedules:", e);

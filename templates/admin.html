@@ -105,12 +105,8 @@
         <aside class="admin-sidebar" aria-label="Administrator Navigation">
             <nav class="admin-nav-menu">
                 <button type="button" class="admin-nav-item active" data-tab="overview">
-                    <span class="nav-icon">📊</span>
-                    <span>Executive Overview</span>
-                </button>
-                <button type="button" class="admin-nav-item" data-tab="farmers">
                     <span class="nav-icon">👨‍🌾</span>
-                    <span>Farmer Accounts</span>
+                    <span>Registered Farmers</span>
                     <span class="nav-badge" id="navFarmerCount">0</span>
                 </button>
                 <button type="button" class="admin-nav-item" data-tab="farms">
@@ -149,156 +145,31 @@
         <!-- Main Content Area -->
         <main class="admin-main-content">
 
-            <!-- TAB 1: EXECUTIVE OVERVIEW -->
+            <!-- TAB 1: REGISTERED FARMERS MANAGEMENT (Primary Dashboard) -->
             <section id="view-overview" class="admin-tab-view active">
                 <div class="view-header">
                     <div>
-                        <h2>Executive System Overview</h2>
-                        <p>Centralized real-time telemetry across all registered farmers, farms, land sections, and irrigation schedules.</p>
+                        <h2>Registered Farmers Management</h2>
+                        <p>Centralized real-time overview of verified farmer accounts created through the registration system.</p>
                     </div>
-                    <button type="button" class="btn-refresh-data" id="btnRefreshKPIs">
+                    <button type="button" class="btn-refresh-data" id="btnRefreshFarmers">
                         <span aria-hidden="true">🔄</span>
-                        <span>Refresh Telemetry</span>
+                        <span>Refresh Farmers</span>
                     </button>
                 </div>
 
-                <!-- KPI Grid -->
-                <div class="admin-kpi-grid">
+                <!-- Top Dynamic Counter: Total Registered Farmers -->
+                <div class="admin-kpi-grid" style="grid-template-columns: minmax(280px, 400px); margin-bottom: 22px;">
                     <div class="kpi-card card-farmers">
                         <div class="kpi-icon">👨‍🌾</div>
                         <div class="kpi-body">
-                            <span class="kpi-label">Registered Farmers</span>
-                            <strong class="kpi-value" id="kpiTotalFarmers">--</strong>
+                            <span class="kpi-label">Total Registered Farmers</span>
+                            <strong class="kpi-value" id="kpiTotalFarmers">0</strong>
                             <div class="kpi-sub">
-                                <span class="tag-active" id="kpiActiveFarmers">-- Active</span>
-                                <span class="tag-suspended" id="kpiSuspendedFarmers">-- Suspended</span>
+                                <span class="tag-active" id="kpiActiveFarmers">0 Active</span>
+                                <span class="tag-suspended" id="kpiSuspendedFarmers">0 Suspended</span>
                             </div>
                         </div>
-                    </div>
-
-                    <div class="kpi-card card-farms">
-                        <div class="kpi-icon">🏡</div>
-                        <div class="kpi-body">
-                            <span class="kpi-label">Registered Farms</span>
-                            <strong class="kpi-value" id="kpiTotalFarms">--</strong>
-                            <div class="kpi-sub">
-                                <span>Total Land: <strong id="kpiTotalLand">-- Acres</strong></span>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div class="kpi-card card-sections">
-                        <div class="kpi-icon">🌾</div>
-                        <div class="kpi-body">
-                            <span class="kpi-label">Land Sections</span>
-                            <strong class="kpi-value" id="kpiTotalSections">--</strong>
-                            <div class="kpi-sub">
-                                <span id="kpiCultivatedSections">-- Cultivated</span>
-                                <span>·</span>
-                                <span id="kpiEmptySections">-- Empty</span>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div class="kpi-card card-crops">
-                        <div class="kpi-icon">🌱</div>
-                        <div class="kpi-body">
-                            <span class="kpi-label">Active Crops</span>
-                            <strong class="kpi-value" id="kpiActiveCrops">--</strong>
-                            <div class="kpi-sub">
-                                <span>Wheat, Rice, Potato, etc.</span>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div class="kpi-card card-water">
-                        <div class="kpi-icon">💧</div>
-                        <div class="kpi-body">
-                            <span class="kpi-label">Water Recommended</span>
-                            <strong class="kpi-value" id="kpiTotalWater">-- L</strong>
-                            <div class="kpi-sub">
-                                <span>Cumulative across sections</span>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div class="kpi-card card-schedules">
-                        <div class="kpi-icon">📅</div>
-                        <div class="kpi-body">
-                            <span class="kpi-label">Irrigation Schedules</span>
-                            <strong class="kpi-value" id="kpiTotalSchedules">--</strong>
-                            <div class="kpi-sub">
-                                <span class="dot-blue" id="kpiUpcomingSessions">-- Upcoming</span>
-                                <span class="dot-green" id="kpiCompletedSessions">-- Done</span>
-                                <span class="dot-red" id="kpiSkippedSessions">-- Skip</span>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Recent Activity & System Health Grid -->
-                <div class="overview-dual-grid">
-                    <div class="overview-card">
-                        <div class="card-header-row">
-                            <h3>📜 Recent Administrative Audit Trail</h3>
-                            <button type="button" class="btn-link-action" data-goto="audit-logs">View All Audit Logs →</button>
-                        </div>
-                        <div id="overviewAuditEventsList" class="compact-event-list">
-                            <!-- Populated via JS -->
-                        </div>
-                    </div>
-
-                    <div class="overview-card">
-                        <div class="card-header-row">
-                            <h3>🤖 AI & Service Connectivity Status</h3>
-                            <button type="button" class="btn-link-action" data-goto="ai-system">Diagnostics →</button>
-                        </div>
-                        <div class="system-status-list">
-                            <div class="status-item">
-                                <div class="status-info">
-                                    <strong>Gemini AI Intelligence Engine</strong>
-                                    <small id="overviewGeminiStatus">Checking...</small>
-                                </div>
-                                <span class="status-badge" id="overviewGeminiBadge">Online</span>
-                            </div>
-                            <div class="status-item">
-                                <div class="status-info">
-                                    <strong>Open-Meteo Weather Service</strong>
-                                    <small id="overviewWeatherStatus">15-min SQLite Caching</small>
-                                </div>
-                                <span class="status-badge badge-green" id="overviewWeatherBadge">Operational</span>
-                            </div>
-                            <div class="status-item">
-                                <div class="status-info">
-                                    <strong>ML Decision Engine (Random Forest)</strong>
-                                    <small>Rule-over-ML (16,240 Samples · 100% Accuracy)</small>
-                                </div>
-                                <span class="status-badge badge-green">Production Ready</span>
-                            </div>
-                            <div class="status-item">
-                                <div class="status-info">
-                                    <strong>Security & RBAC Enforcement</strong>
-                                    <small>Password Hashing & Login Rate-Limiting</small>
-                                </div>
-                                <span class="status-badge badge-green">Protected</span>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </section>
-
-            <!-- TAB 2: FARMER ACCOUNTS MANAGEMENT -->
-            <section id="view-farmers" class="admin-tab-view">
-                <div class="view-header">
-                    <div>
-                        <h2>Farmer Account Management</h2>
-                        <p>Search, inspect, edit, suspend, activate, or reset passwords for any registered farmer account.</p>
-                    </div>
-                    <div class="view-header-actions">
-                        <button type="button" class="btn-refresh-data" id="btnRefreshFarmers">
-                            <span aria-hidden="true">🔄</span>
-                            <span>Refresh Farmers</span>
-                        </button>
                     </div>
                 </div>
 
@@ -306,7 +177,7 @@
                 <div class="admin-filter-bar">
                     <div class="filter-search-wrap">
                         <span class="search-glyph">🔍</span>
-                        <input type="text" id="farmerSearchInput" class="admin-filter-input" placeholder="Search by name, ID, phone, email, or village..." />
+                        <input type="text" id="farmerSearchInput" class="admin-filter-input" placeholder="Search by Farmer ID, Name, Username, Mobile, or Email..." />
                     </div>
 
                     <div class="filter-dropdown-group">
@@ -322,7 +193,7 @@
                     </div>
                 </div>
 
-                <!-- Farmers Table -->
+                <!-- Registered Farmers Table -->
                 <div class="admin-table-card">
                     <div class="table-responsive">
                         <table class="admin-table" id="farmersTable">
@@ -330,13 +201,12 @@
                                 <tr>
                                     <th>Farmer ID</th>
                                     <th>Farmer Name</th>
-                                    <th>Mobile & Email</th>
-                                    <th>State & Village</th>
-                                    <th>Farms</th>
-                                    <th>Total Land</th>
-                                    <th>Sections</th>
-                                    <th>Active Crops</th>
-                                    <th>Status</th>
+                                    <th>Username</th>
+                                    <th>Email</th>
+                                    <th>Mobile Number</th>
+                                    <th>Registration Date</th>
+                                    <th>Account Status</th>
+                                    <th>Last Login</th>
                                     <th class="text-right">Actions</th>
                                 </tr>
                             </thead>
@@ -346,9 +216,35 @@
                         </table>
                     </div>
                     <div id="farmersEmptyNotice" class="admin-empty-notice" style="display: none;">
-                        No farmer accounts found matching the current search filters.
+                        <h3>No registered farmers yet.</h3>
+                        <p>Farmers who successfully create accounts through the Create Account / Register page will be displayed here automatically.</p>
                     </div>
                 </div>
+
+                <!-- Preserved element hooks for backwards compatibility -->
+                <div style="display:none;" aria-hidden="true">
+                    <button type="button" id="btnRefreshKPIs"></button>
+                    <span id="kpiTotalFarms"></span>
+                    <span id="kpiTotalLand"></span>
+                    <span id="kpiTotalSections"></span>
+                    <span id="kpiCultivatedSections"></span>
+                    <span id="kpiEmptySections"></span>
+                    <span id="kpiActiveCrops"></span>
+                    <span id="kpiTotalWater"></span>
+                    <span id="kpiTotalSchedules"></span>
+                    <span id="kpiUpcomingSessions"></span>
+                    <span id="kpiCompletedSessions"></span>
+                    <span id="kpiSkippedSessions"></span>
+                    <div id="overviewAuditEventsList"></div>
+                    <span id="overviewGeminiStatus"></span>
+                    <span id="overviewGeminiBadge"></span>
+                    <span id="overviewWeatherStatus"></span>
+                    <span id="overviewWeatherBadge"></span>
+                </div>
+            </section>
+
+            <!-- TAB 2: FARMER ACCOUNTS ALIAS (Smoothly maps to primary Registered Farmers view) -->
+            <section id="view-farmers" class="admin-tab-view" style="display: none;">
             </section>
 
             <!-- TAB 3: GLOBAL FARM MANAGEMENT -->

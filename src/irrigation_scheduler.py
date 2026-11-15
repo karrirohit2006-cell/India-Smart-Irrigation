@@ -238,22 +238,25 @@ def generate_and_save_schedule(
         conn.close()
 
 
-def get_all_schedules(crop: Optional[str] = None) -> List[Dict[str, Any]]:
-    """Retrieve all schedules ordered by irrigation_date."""
+def get_all_schedules(crop: Optional[str] = None, farmer_id: Optional[str] = None) -> List[Dict[str, Any]]:
+    """Retrieve all schedules ordered by irrigation_date, optionally filtered by farmer_id and crop."""
     init_scheduler_db()
     conn = get_db_connection()
     try:
+        query = "SELECT * FROM smart_irrigation_schedules"
+        conditions = []
+        params = []
+        if farmer_id:
+            conditions.append("farmer_id = ?")
+            params.append(farmer_id)
         if crop:
-            cursor = conn.execute("""
-                SELECT * FROM smart_irrigation_schedules 
-                WHERE LOWER(crop) = LOWER(?)
-                ORDER BY irrigation_date ASC;
-            """, (crop.strip(),))
-        else:
-            cursor = conn.execute("""
-                SELECT * FROM smart_irrigation_schedules 
-                ORDER BY irrigation_date ASC;
-            """)
+            conditions.append("LOWER(crop) = LOWER(?)")
+            params.append(crop.strip())
+        if conditions:
+            query += " WHERE " + " AND ".join(conditions)
+        query += " ORDER BY irrigation_date ASC;"
+
+        cursor = conn.execute(query, params)
         rows = cursor.fetchall()
         results = []
         for r in rows:
@@ -416,9 +419,9 @@ def update_schedule_status(schedule_id: str, new_status: str, skip_reason: Optio
             conn.close()
 
 
-def get_schedule_summary() -> Dict[str, Any]:
-    """Provide a structured summary for the voice assistant and chatbot."""
-    schedules = get_all_schedules()
+def get_schedule_summary(farmer_id: Optional[str] = None) -> Dict[str, Any]:
+    """Provide a structured summary for the voice assistant and chatbot, optionally filtered by farmer_id."""
+    schedules = get_all_schedules(farmer_id=farmer_id)
     active = [s for s in schedules if s["status"] in ("Upcoming", "Pending", "Rescheduled")]
     completed = [s for s in schedules if s["status"] == "Completed"]
     skipped = [s for s in schedules if s["status"] == "Skipped"]

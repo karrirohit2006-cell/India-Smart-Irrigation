@@ -996,3 +996,55 @@
         display: none;
     }
 }
+
+/* Clean Registered Farmers Table & Empty State */
+.admin-table tbody tr {
+    cursor: pointer;
+    transition: background-color 0.15s ease;
+}
+
+.admin-table tbody tr:hover {
+    background-color: #f8fafc;
+}
+
+.empty-state-wrap {
+    padding: 36px 20px;
+    text-align: center;
+    background: #f8fafc;
+    border-radius: 12px;
+    border: 1px dashed #cbd5e1;
+    margin: 16px 0;
+}
+
+.empty-state-wrap h3 {
+    margin: 8px 0 6px 0;
+    font-size: 16px;
+    font-weight: 700;
+    color: #1e293b;
+}
+
+.empty-state-wrap p {
+    margin: 0;
+    font-size: 13px;
+    color: #64748b;
+}
+
+.btn-delete {
+    color: #dc2626 !important;
+    border-color: #fca5a5 !important;
+}
+
+.btn-delete:hover {
+    background-color: #fee2e2 !important;
+    border-color: #ef4444 !important;
+}
+
+.btn-edit {
+    color: #2563eb !important;
+    border-color: #bfdbfe !important;
+}
+
+.btn-edit:hover {
+    background-color: #dbeafe !important;
+    border-color: #3b82f6 !important;
+}

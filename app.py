@@ -71,6 +71,7 @@ from src.admin_manager import (
     set_farmer_status,
     reset_farmer_password_admin,
     update_farmer_profile_admin,
+    delete_farmer_admin,
     get_all_farms_admin,
     get_all_schedules_admin,
     get_admin_weather_overview,
@@ -122,7 +123,8 @@ app.secret_key = os.getenv("FLASK_SECRET_KEY", "agrisaathi-farmer-smart-irrigati
 irrigation_service = IrrigationService.get_instance()
 init_scheduler_db()
 init_farm_db()
-seed_demo_accounts()
+if os.getenv("SEED_DEMO_ACCOUNTS", "").lower() in ("1", "true"):
+    seed_demo_accounts()
 init_admin_db()
 bootstrap_super_admin()
 init_passkey_db()
@@ -316,9 +318,10 @@ def predict():
 # Smart Irrigation Schedules API
 @app.route("/api/schedules", methods=["GET"])
 def get_schedules_endpoint():
+    farmer_id = session.get("farmer_id") or request.headers.get("X-Farmer-ID")
     crop = request.args.get("crop")
-    schedules = get_all_schedules(crop=crop)
-    summary = get_schedule_summary()
+    schedules = get_all_schedules(crop=crop, farmer_id=farmer_id)
+    summary = get_schedule_summary(farmer_id=farmer_id)
     return jsonify({
         "schedules": schedules,
         "summary": summary,
@@ -1740,6 +1743,27 @@ def admin_update_farmer(farmer_id):
     if not res.get("success"):
         return jsonify(res), 400
     return jsonify(res), 200
+
+
+@app.route("/api/admin/farmers/<farmer_id>", methods=["DELETE"])
+@admin_required
+def admin_delete_farmer(farmer_id):
+    ip = get_client_ip()
+    res = delete_farmer_admin(
+        admin_id=session["admin_id"],
+        admin_username=session["admin_username"],
+        farmer_id=farmer_id,
+        ip_address=ip,
+    )
+    if not res.get("success"):
+        return jsonify(res), 404
+    return jsonify(res), 200
+
+
+@app.route("/api/admin/farmers/<farmer_id>/delete", methods=["POST"])
+@admin_required
+def admin_delete_farmer_post(farmer_id):
+    return admin_delete_farmer(farmer_id)
 
 
 # Administrative Impersonation

@@ -455,15 +455,52 @@ class AgriVoiceWebsiteController {
                 this.handleNavigationAction(payload);
                 break;
 
+            case "select_crop":
+                this.handleSelectCrop(payload);
+                break;
+
             case "select_section":
-                if (payload.section_id && window.selectSection) {
-                    window.selectSection(payload.section_id);
-                    const secCard = document.querySelector(`.section-card[data-id="${payload.section_id}"]`);
+                let targetSecId = payload.section_id;
+                if (!targetSecId && typeof payload.ordinal_index === "number" && window.farmSections && window.farmSections.length > payload.ordinal_index) {
+                    targetSecId = window.farmSections[payload.ordinal_index].id;
+                }
+                if (targetSecId && window.selectSection) {
+                    window.selectSection(targetSecId);
+                    const secCard = document.querySelector(`.section-card[data-section-id="${targetSecId}"]`) || document.querySelector(`.section-card[data-id="${targetSecId}"]`);
                     if (secCard) {
                         secCard.scrollIntoView({ behavior: "smooth", block: "center" });
                         secCard.classList.add("voice-action-highlight");
                         setTimeout(() => secCard.classList.remove("voice-action-highlight"), 2500);
                     }
+                }
+                break;
+
+            case "select_farm":
+                const farmOverviewSec = document.getElementById("sectionFarmOverview");
+                if (farmOverviewSec) {
+                    farmOverviewSec.scrollIntoView({ behavior: "smooth", block: "start" });
+                    farmOverviewSec.classList.add("voice-action-highlight");
+                    setTimeout(() => farmOverviewSec.classList.remove("voice-action-highlight"), 2500);
+                }
+                break;
+
+            case "scroll_page":
+                if (payload.direction === "top") {
+                    window.scrollTo({ top: 0, behavior: "smooth" });
+                } else if (payload.direction === "down") {
+                    window.scrollBy({ top: 500, behavior: "smooth" });
+                } else if (payload.direction === "up") {
+                    window.scrollBy({ top: -500, behavior: "smooth" });
+                }
+                break;
+
+            case "save_section":
+                const saveSecBtn = document.getElementById("btnSaveSection") || document.querySelector("#sectionModal button[type='submit']") || document.querySelector("#formSectionManage button[type='submit']");
+                if (saveSecBtn) {
+                    saveSecBtn.click();
+                } else {
+                    const finishBtn = document.getElementById("btnCompleteOnboarding") || document.getElementById("btnOnboardSave");
+                    if (finishBtn) finishBtn.click();
                 }
                 break;
 
@@ -496,17 +533,18 @@ class AgriVoiceWebsiteController {
                 }
                 break;
 
+            case "calculate_irrigation":
             case "run_irrigation_prediction":
                 if (payload.section_id && window.selectSection) {
                     window.selectSection(payload.section_id);
                 }
-                const plannerSec = document.getElementById("irrigation-planner");
+                const plannerSec = document.getElementById("irrigation-planner") || document.getElementById("irrigationForm");
                 if (plannerSec) plannerSec.scrollIntoView({ behavior: "smooth", block: "start" });
                 if (window.triggerPrediction) {
                     window.triggerPrediction();
                 } else {
                     const btn = document.getElementById("predictButton");
-                    if (btn) btn.click();
+                    if (btn && !btn.disabled) btn.click();
                 }
                 break;
 
@@ -569,14 +607,101 @@ class AgriVoiceWebsiteController {
         }
     }
 
+    handleSelectCrop(payload) {
+        const stateSelect = document.getElementById("state_select");
+        const cropSelect = document.getElementById("crop_type");
+        if (!cropSelect) return;
+
+        // Ensure state is selected so crop dropdown is populated
+        if (stateSelect && !stateSelect.value && window.currentFarmer && window.currentFarmer.state) {
+            stateSelect.value = window.currentFarmer.state;
+            stateSelect.dispatchEvent(new Event("change"));
+        }
+
+        const applyCrop = () => {
+            if (payload.crop) {
+                const target = payload.crop.toLowerCase();
+                const matched = Array.from(cropSelect.options).find(opt => 
+                    opt.value.toLowerCase() === target || 
+                    opt.text.toLowerCase().includes(target) ||
+                    target.includes(opt.value.toLowerCase())
+                );
+                if (matched) {
+                    cropSelect.value = matched.value;
+                    cropSelect.dispatchEvent(new Event("change"));
+                }
+            } else if (payload.crop_index !== undefined || payload.crop_number !== undefined) {
+                const idx = (payload.crop_index !== undefined) ? payload.crop_index : (payload.crop_number - 1);
+                const valid = Array.from(cropSelect.options).filter(opt => opt.value && !opt.disabled);
+                if (valid[idx]) {
+                    cropSelect.value = valid[idx].value;
+                    cropSelect.dispatchEvent(new Event("change"));
+                }
+            }
+
+            const plannerEl = document.getElementById("irrigation-planner") || cropSelect;
+            plannerEl.scrollIntoView({ behavior: "smooth", block: "center" });
+            cropSelect.classList.add("voice-action-highlight");
+            setTimeout(() => cropSelect.classList.remove("voice-action-highlight"), 2500);
+        };
+
+        if (cropSelect.disabled) {
+            setTimeout(applyCrop, 200);
+        } else {
+            applyCrop();
+        }
+    }
+
     handleNavigationAction(payload) {
         const target = payload.target;
         switch (target) {
             case "dashboard":
-                if (window.location.pathname.includes("/dashboard")) {
+                // Close any open modals
+                document.querySelectorAll(".modal, .modal-backdrop, [id$='Modal']").forEach(m => {
+                    if (m.style) m.style.display = "none";
+                });
+                if (window.location.pathname.includes("/dashboard") || window.location.pathname === "/") {
                     window.scrollTo({ top: 0, behavior: "smooth" });
                 } else {
                     window.location.href = "/dashboard";
+                }
+                break;
+
+            case "crop_details":
+                const elCrop = document.getElementById("crop_type") || document.getElementById("cropGrowthStageFieldWrap") || document.getElementById("irrigation-planner");
+                if (elCrop) {
+                    elCrop.scrollIntoView({ behavior: "smooth", block: "center" });
+                    elCrop.classList.add("voice-action-highlight");
+                    setTimeout(() => elCrop.classList.remove("voice-action-highlight"), 2500);
+                }
+                break;
+
+            case "soil_details":
+                const elSoil = document.getElementById("soil_moisture") || document.getElementById("soil_temperature") || document.getElementById("irrigation-planner");
+                if (elSoil) {
+                    elSoil.scrollIntoView({ behavior: "smooth", block: "center" });
+                    elSoil.classList.add("voice-action-highlight");
+                    setTimeout(() => elSoil.classList.remove("voice-action-highlight"), 2500);
+                }
+                break;
+
+            case "settings":
+                const dropBtn = document.getElementById("farmerAccountBtn");
+                const dropMenu = document.getElementById("farmerDropdownMenu");
+                if (dropMenu) dropMenu.style.display = (dropMenu.style.display === "block" ? "none" : "block");
+                if (dropBtn) {
+                    dropBtn.scrollIntoView({ behavior: "smooth", block: "center" });
+                    dropBtn.classList.add("voice-action-highlight");
+                    setTimeout(() => dropBtn.classList.remove("voice-action-highlight"), 2500);
+                }
+                break;
+
+            case "irrigation_schedule":
+                const elSched = document.getElementById("smartSchedulerCard") || document.getElementById("noIrrigationCard") || document.getElementById("irrigation-planner");
+                if (elSched) {
+                    elSched.scrollIntoView({ behavior: "smooth", block: "center" });
+                    elSched.classList.add("voice-action-highlight");
+                    setTimeout(() => elSched.classList.remove("voice-action-highlight"), 2500);
                 }
                 break;
 
@@ -625,7 +750,14 @@ class AgriVoiceWebsiteController {
                 break;
 
             case "go_back":
-                window.history.back();
+                const openModal = document.querySelector(".modal[style*='block'], .modal-backdrop[style*='block'], #sectionModal[style*='block'], #globalCalendarModal[style*='block'], #predictionHistoryModal[style*='block']");
+                if (openModal) {
+                    openModal.style.display = "none";
+                    const closeBtn = openModal.querySelector(".btn-close, .modal-close");
+                    if (closeBtn) closeBtn.click();
+                } else {
+                    window.history.back();
+                }
                 break;
 
             case "home":

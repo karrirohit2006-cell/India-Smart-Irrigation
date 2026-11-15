@@ -107,13 +107,13 @@ def bootstrap_super_admin() -> Dict[str, Any]:
         if row:
             return dict(row)
 
-        admin_username = os.getenv("ADMIN_USERNAME", "admin").strip()
-        admin_email = os.getenv("ADMIN_EMAIL", "superadmin@agrosmart.org").strip().lower()
+        admin_username = os.getenv("ADMIN_USERNAME", "kamal").strip()
+        admin_email = os.getenv("ADMIN_EMAIL", "kamal@agrosmart.org").strip().lower()
         
         # Check for pre-hashed password or plaintext password in environment
         pwd_hash = os.getenv("ADMIN_PASSWORD_HASH")
         if not pwd_hash:
-            raw_password = os.getenv("ADMIN_PASSWORD", "SuperAdmin@2026")
+            raw_password = os.getenv("ADMIN_PASSWORD", "kamal@2007")
             pwd_hash = generate_password_hash(raw_password)
 
         admin_id = f"admin_{uuid.uuid4().hex[:10]}"
@@ -328,32 +328,84 @@ def get_admin_dashboard_kpis() -> Dict[str, Any]:
     init_admin_db()
     conn = get_db_connection()
     try:
+        # Genuine registered farmers filter (must have non-empty username & password, not in admins)
+        registered_farmer_filter = """
+            f.username IS NOT NULL AND TRIM(f.username) != ''
+            AND f.password_hash IS NOT NULL AND TRIM(f.password_hash) != ''
+            AND LOWER(TRIM(f.username)) NOT IN (SELECT LOWER(TRIM(username)) FROM admins WHERE username IS NOT NULL)
+            AND f.id NOT IN (SELECT id FROM admins)
+        """
+
         # Farmer counts
-        total_farmers = conn.execute("SELECT COUNT(*) FROM farmers;").fetchone()[0]
-        active_farmers = conn.execute("SELECT COUNT(*) FROM farmers WHERE status IS NULL OR status = 'Active';").fetchone()[0]
-        suspended_farmers = conn.execute("SELECT COUNT(*) FROM farmers WHERE status = 'Suspended';").fetchone()[0]
+        total_farmers = conn.execute(f"SELECT COUNT(DISTINCT f.id) FROM farmers f WHERE {registered_farmer_filter};").fetchone()[0]
+        active_farmers = conn.execute(f"SELECT COUNT(DISTINCT f.id) FROM farmers f WHERE {registered_farmer_filter} AND (f.status IS NULL OR f.status = 'Active');").fetchone()[0]
+        suspended_farmers = conn.execute(f"SELECT COUNT(DISTINCT f.id) FROM farmers f WHERE {registered_farmer_filter} AND f.status = 'Suspended';").fetchone()[0]
 
         # Farm & Land counts
-        total_farms = conn.execute("SELECT COUNT(*) FROM farms;").fetchone()[0]
-        land_row = conn.execute("SELECT SUM(total_area_acres) FROM farms;").fetchone()
+        total_farms = conn.execute(f"""
+            SELECT COUNT(DISTINCT fm.id) FROM farms fm
+            JOIN farmers f ON fm.farmer_id = f.id
+            WHERE {registered_farmer_filter};
+        """).fetchone()[0]
+        land_row = conn.execute(f"""
+            SELECT SUM(fm.total_area_acres) FROM farms fm
+            JOIN farmers f ON fm.farmer_id = f.id
+            WHERE {registered_farmer_filter};
+        """).fetchone()
         total_land_acres = round(land_row[0] or 0.0, 2)
 
         # Sections & Crops
-        total_sections = conn.execute("SELECT COUNT(*) FROM farm_sections;").fetchone()[0]
-        cultivated_sections = conn.execute("SELECT COUNT(*) FROM farm_sections WHERE is_empty = 0;").fetchone()[0]
-        empty_sections = conn.execute("SELECT COUNT(*) FROM farm_sections WHERE is_empty = 1;").fetchone()[0]
+        total_sections = conn.execute(f"""
+            SELECT COUNT(DISTINCT fs.id) FROM farm_sections fs
+            JOIN farmers f ON fs.farmer_id = f.id
+            WHERE {registered_farmer_filter};
+        """).fetchone()[0]
+        cultivated_sections = conn.execute(f"""
+            SELECT COUNT(DISTINCT fs.id) FROM farm_sections fs
+            JOIN farmers f ON fs.farmer_id = f.id
+            WHERE fs.is_empty = 0 AND {registered_farmer_filter};
+        """).fetchone()[0]
+        empty_sections = conn.execute(f"""
+            SELECT COUNT(DISTINCT fs.id) FROM farm_sections fs
+            JOIN farmers f ON fs.farmer_id = f.id
+            WHERE fs.is_empty = 1 AND {registered_farmer_filter};
+        """).fetchone()[0]
         
-        crops_row = conn.execute("SELECT COUNT(DISTINCT LOWER(crop)) FROM farm_sections WHERE crop IS NOT NULL AND is_empty = 0;").fetchone()
+        crops_row = conn.execute(f"""
+            SELECT COUNT(DISTINCT LOWER(fs.crop)) FROM farm_sections fs
+            JOIN farmers f ON fs.farmer_id = f.id
+            WHERE fs.crop IS NOT NULL AND fs.is_empty = 0 AND {registered_farmer_filter};
+        """).fetchone()
         active_crops_count = crops_row[0] or 0
 
         # Irrigation Schedules
-        sched_total = conn.execute("SELECT COUNT(*) FROM smart_irrigation_schedules;").fetchone()[0]
-        sched_upcoming = conn.execute("SELECT COUNT(*) FROM smart_irrigation_schedules WHERE status IN ('Upcoming', 'Pending', 'Rescheduled');").fetchone()[0]
-        sched_completed = conn.execute("SELECT COUNT(*) FROM smart_irrigation_schedules WHERE status = 'Completed';").fetchone()[0]
-        sched_skipped = conn.execute("SELECT COUNT(*) FROM smart_irrigation_schedules WHERE status = 'Skipped';").fetchone()[0]
+        sched_total = conn.execute(f"""
+            SELECT COUNT(DISTINCT s.id) FROM smart_irrigation_schedules s
+            JOIN farmers f ON s.farmer_id = f.id
+            WHERE {registered_farmer_filter};
+        """).fetchone()[0]
+        sched_upcoming = conn.execute(f"""
+            SELECT COUNT(DISTINCT s.id) FROM smart_irrigation_schedules s
+            JOIN farmers f ON s.farmer_id = f.id
+            WHERE s.status IN ('Upcoming', 'Pending', 'Rescheduled') AND {registered_farmer_filter};
+        """).fetchone()[0]
+        sched_completed = conn.execute(f"""
+            SELECT COUNT(DISTINCT s.id) FROM smart_irrigation_schedules s
+            JOIN farmers f ON s.farmer_id = f.id
+            WHERE s.status = 'Completed' AND {registered_farmer_filter};
+        """).fetchone()[0]
+        sched_skipped = conn.execute(f"""
+            SELECT COUNT(DISTINCT s.id) FROM smart_irrigation_schedules s
+            JOIN farmers f ON s.farmer_id = f.id
+            WHERE s.status = 'Skipped' AND {registered_farmer_filter};
+        """).fetchone()[0]
 
         # Total water scheduled
-        water_row = conn.execute("SELECT SUM(water_quantity_liters) FROM smart_irrigation_schedules WHERE status IN ('Upcoming', 'Pending', 'Rescheduled', 'Completed');").fetchone()
+        water_row = conn.execute(f"""
+            SELECT SUM(s.water_quantity_liters) FROM smart_irrigation_schedules s
+            JOIN farmers f ON s.farmer_id = f.id
+            WHERE s.status IN ('Upcoming', 'Pending', 'Rescheduled', 'Completed') AND {registered_farmer_filter};
+        """).fetchone()
         total_water_liters = round(water_row[0] or 0.0, 1)
 
         # Weather caches
@@ -399,7 +451,7 @@ def get_all_farmers_admin(
     conn = get_db_connection()
     try:
         query = """
-            SELECT f.id, f.name, f.phone, f.email, f.state, f.district, f.village,
+            SELECT f.id, f.name, f.username, f.phone, f.email, f.state, f.district, f.village,
                    f.latitude, f.longitude, f.created_at, f.last_login_at,
                    COALESCE(f.status, 'Active') as status, f.suspended_at, f.suspend_reason,
                    COUNT(DISTINCT fm.id) as farms_count,
@@ -408,14 +460,17 @@ def get_all_farmers_admin(
             FROM farmers f
             LEFT JOIN farms fm ON f.id = fm.farmer_id
             LEFT JOIN farm_sections fs ON f.id = fs.farmer_id
-            WHERE 1=1
+            WHERE f.username IS NOT NULL AND TRIM(f.username) != ''
+              AND f.password_hash IS NOT NULL AND TRIM(f.password_hash) != ''
+              AND LOWER(TRIM(f.username)) NOT IN (SELECT LOWER(TRIM(username)) FROM admins WHERE username IS NOT NULL)
+              AND f.id NOT IN (SELECT id FROM admins)
         """
         params = []
 
         if search_query:
             sq = f"%{search_query.strip().lower()}%"
-            query += " AND (LOWER(f.name) LIKE ? OR LOWER(f.phone) LIKE ? OR LOWER(f.email) LIKE ? OR LOWER(f.id) LIKE ?)"
-            params.extend([sq, sq, sq, sq])
+            query += " AND (LOWER(f.name) LIKE ? OR LOWER(f.username) LIKE ? OR LOWER(f.phone) LIKE ? OR LOWER(f.email) LIKE ? OR LOWER(f.id) LIKE ?)"
+            params.extend([sq, sq, sq, sq, sq])
 
         if state and state.lower() != "all":
             query += " AND LOWER(f.state) = ?"
@@ -449,11 +504,24 @@ def get_all_farmers_admin(
 
 
 def get_farmer_details_admin(farmer_id: str) -> Optional[Dict[str, Any]]:
-    """Retrieve exhaustive inspection details for a single farmer."""
+    """Retrieve exhaustive inspection details for a single registered farmer."""
     init_admin_db()
     conn = get_db_connection()
     try:
-        f_row = conn.execute("SELECT * FROM farmers WHERE id = ?;", (farmer_id,)).fetchone()
+        # Prevent accessing admin accounts through farmer endpoint
+        admin_check = conn.execute(
+            "SELECT 1 FROM admins WHERE id = ? OR LOWER(username) IN (SELECT LOWER(username) FROM farmers WHERE id = ?);",
+            (farmer_id, farmer_id)
+        ).fetchone()
+        if admin_check:
+            return None
+
+        f_row = conn.execute("""
+            SELECT * FROM farmers 
+            WHERE id = ? 
+              AND username IS NOT NULL AND TRIM(username) != '' 
+              AND password_hash IS NOT NULL AND TRIM(password_hash) != '';
+        """, (farmer_id,)).fetchone()
         if not f_row:
             return None
 
@@ -631,6 +699,51 @@ def update_farmer_profile_admin(
             ip_address=ip_address,
         )
         return {"success": True, "farmer_id": farmer_id}
+    finally:
+        conn.close()
+
+
+def delete_farmer_admin(
+    admin_id: str,
+    admin_username: str,
+    farmer_id: str,
+    ip_address: Optional[str] = None,
+) -> Dict[str, Any]:
+    """Permanently delete a farmer account and their associated farms, sections, and schedules."""
+    init_admin_db()
+    conn = get_db_connection()
+    try:
+        farmer_row = conn.execute("SELECT name, username FROM farmers WHERE id = ?;", (farmer_id,)).fetchone()
+        if not farmer_row:
+            return {"success": False, "error": "Farmer not found."}
+
+        farmer_name = farmer_row[0] or farmer_id
+        farmer_username = farmer_row[1] or farmer_id
+
+        with conn:
+            # 1. Delete smart irrigation schedules
+            conn.execute("DELETE FROM smart_irrigation_schedules WHERE farmer_id = ?;", (farmer_id,))
+            # 2. Delete farm sections
+            conn.execute("DELETE FROM farm_sections WHERE farmer_id = ?;", (farmer_id,))
+            # 3. Delete farms
+            conn.execute("DELETE FROM farms WHERE farmer_id = ?;", (farmer_id,))
+            # 4. Delete passkeys & OTPs
+            conn.execute("DELETE FROM farmer_passkeys WHERE farmer_id = ?;", (farmer_id,))
+            conn.execute("DELETE FROM farmer_otps WHERE phone IN (SELECT phone FROM farmers WHERE id = ?);", (farmer_id,))
+            # 5. Delete farmer record
+            conn.execute("DELETE FROM farmers WHERE id = ?;", (farmer_id,))
+
+        log_admin_action(
+            admin_id=admin_id,
+            admin_username=admin_username,
+            action="DELETE_FARMER",
+            target_type="farmer",
+            target_id=farmer_id,
+            details=f"Farmer '{farmer_name}' (@{farmer_username}, ID: {farmer_id}) and all associated farms, sections, and schedules permanently deleted by administrator.",
+            ip_address=ip_address,
+        )
+
+        return {"success": True, "farmer_id": farmer_id, "message": f"Farmer '{farmer_name}' deleted successfully."}
     finally:
         conn.close()
 

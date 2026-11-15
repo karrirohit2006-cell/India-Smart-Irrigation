@@ -48,6 +48,10 @@ APPROVED_VOICE_ACTIONS = {
     "navigate_to_page",
     "select_farm",
     "select_section",
+    "select_crop",
+    "scroll_page",
+    "save_section",
+    "calculate_irrigation",
     "update_farm_details",
     "add_land_section",
     "edit_land_section",
@@ -63,6 +67,7 @@ APPROVED_VOICE_ACTIONS = {
     "set_onboarding_field",
     "complete_onboarding",
     "explain_prediction",
+    "cancel_action",
 }
 
 # Supported Indian States Mapping (Normalized English Name)
@@ -273,6 +278,19 @@ ORDINALS = {
     "second": 1, "2nd": 1, "section 2": 1, "section 02": 1,
     "third": 2, "3rd": 2, "section 3": 2, "section 03": 2,
     "fourth": 3, "4th": 3,
+    "crop number 1": 0, "crop number one": 0, "first crop": 0, "crop 1": 0, "crop one": 0,
+    "crop number 2": 1, "crop number two": 1, "second crop": 1, "crop 2": 1, "crop two": 1,
+    "crop number 3": 2, "crop number three": 2, "third crop": 2, "crop 3": 2, "crop three": 2,
+    "crop number 4": 3, "crop number four": 3, "fourth crop": 3, "crop 4": 3, "crop four": 3,
+    "first land section": 0, "1st land section": 0, "land section 1": 0, "land section 01": 0, "land section number 1": 0, "land section number one": 0,
+    "second land section": 1, "2nd land section": 1, "land section 2": 1, "land section 02": 1, "land section number 2": 1, "land section number two": 1,
+    "third land section": 2, "3rd land section": 2, "land section 3": 2, "land section 03": 2, "land section number 3": 2, "land section number three": 2,
+    "fourth land section": 3, "4th land section": 3, "land section 4": 3, "land section 04": 3, "land section number 4": 3, "land section number four": 3,
+    "first farm": 0, "second farm": 1,
+    "number one": 0, "number 1": 0, "no 1": 0, "no. 1": 0,
+    "number two": 1, "number 2": 1, "no 2": 1, "no. 2": 1,
+    "number three": 2, "number 3": 2, "no 3": 2, "no. 3": 2,
+    "number four": 3, "number 4": 3, "no 4": 3, "no. 4": 3,
     # Telugu
     "మొదటి": 0, "మొదటిది": 0, "మొదటి సెక్షన్": 0,
     "రెండవ": 1, "రెండో": 1, "రెండోది": 1, "రెండవ సెక్షన్": 1,
@@ -361,14 +379,15 @@ def extract_number(text: str) -> Optional[float]:
 def extract_ordinal(text: str) -> Optional[int]:
     """Extract ordinal index (0-based) from text."""
     lower = text.lower()
-    for word, idx in ORDINALS.items():
+    # Sort ordinals by length descending so multi-word keys take precedence
+    for word, idx in sorted(ORDINALS.items(), key=lambda x: len(x[0]), reverse=True):
         if word in lower:
             return idx
-    # Check Section 1, Section 2, Section 01, etc.
-    sec_num = re.search(r"(?:section|సెక్షన్|सेक्शन|ਸੈਕਸ਼ਨ)\s*0?(\d+)", lower)
-    if sec_num:
+    # Check Section 1, Section 2, Land Section 2, Crop 2, Farm 1, Number 2, etc.
+    num_match = re.search(r"(?:(?:land\s*)?section|crop|farm|నెంబర్|నంబర్|नंबर|ਨੰਬਰ|number|no\.?|#)\s*0?(\d+)", lower)
+    if num_match:
         try:
-            val = int(sec_num.group(1))
+            val = int(num_match.group(1))
             if val >= 1:
                 return val - 1
         except ValueError:
@@ -549,10 +568,177 @@ def process_voice_command(
             }
 
     # --------------------------------------------------------------------------
-    # 1. Navigation Commands (Section 3)
+    # 1. Navigation & General Website Control Commands
     # --------------------------------------------------------------------------
+    # Scroll Page Commands
+    if any(p in clean for p in ["scroll down", "scroll up", "scroll to the top", "scroll to top", "scroll top", "పైకి స్క్రోల్ చేయి", "కిందికి స్క్రోల్ చేయి", "नीचे स्क्रॉल करें", "ऊपर स्क्रॉल करें"]):
+        direction = "top" if ("top" in clean or "పైకి" in clean or "ऊपर" in clean) else ("down" if ("down" in clean or "కిందికి" in clean or "नीचे" in clean) else "down")
+        msg = "Scrolling to the top." if direction == "top" else "Scrolling down."
+        return {
+            "status": "success",
+            "action": "scroll_page",
+            "action_payload": {"direction": direction},
+            "requires_confirmation": False,
+            "spoken_response": msg,
+            "display_text": msg,
+            "language": language,
+        }
+
+    # Open Crop Details
+    if any(p in clean for p in [
+        "open crop details", "crop details", "show crop details", "go to crop details", "crop information",
+        "పంట వివరాలు", "పంట వివరాలు చూపించు", "फसल विवरण", "फसल का विवरण", "ਫਸਲ ਦੇ ਵੇਰਵੇ",
+    ]):
+        msg = "Opening Crop Details." if language == "en" else "పంట వివరాలను తెరుస్తున్నాము."
+        return {
+            "status": "success",
+            "action": "navigate_to_page",
+            "action_payload": {"target": "crop_details", "element_id": "crop_type"},
+            "requires_confirmation": False,
+            "spoken_response": msg,
+            "display_text": msg,
+            "language": language,
+        }
+
+    # Open Soil Details
+    if any(p in clean for p in [
+        "open soil details", "soil details", "show soil details", "go to soil details", "soil information",
+        "నేల వివరాలు", "భూమి తేమ వివరాలు", "మట్టి వివరాలు", "मिट्टी का विवरण", "ਮਿੱਟੀ ਦੇ ਵੇਰਵੇ",
+    ]):
+        msg = "Opening Soil Details." if language == "en" else "నేల వివరాలను తెరుస్తున్నాము."
+        return {
+            "status": "success",
+            "action": "navigate_to_page",
+            "action_payload": {"target": "soil_details", "element_id": "soil_moisture"},
+            "requires_confirmation": False,
+            "spoken_response": msg,
+            "display_text": msg,
+            "language": language,
+        }
+
+    # Open First Farm
+    if any(p in clean for p in [
+        "open the first farm", "select the first farm", "open first farm", "first farm",
+        "మొదటి ఫార్మ్ ఓపెన్ చేయి", "पहला खेत खोलो", "ਪਹਿਲਾ ਖੇਤ ਖੋਲ੍ਹੋ",
+    ]):
+        msg = "Opening your farm overview." if language == "en" else "మీ ఫార్మ్ వివరాలు తెరుస్తున్నాము."
+        return {
+            "status": "success",
+            "action": "select_farm",
+            "action_payload": {"farm_index": 0, "target": "farm_overview"},
+            "requires_confirmation": False,
+            "spoken_response": msg,
+            "display_text": msg,
+            "language": language,
+        }
+
+    # Save Section
+    if any(p in clean for p in [
+        "save this section", "save section", "save changes", "save",
+        "ఈ సెక్షన్ సేవ్ చేయి", "సెక్షన్ సేవ్ చేయి", "భద్రపరచు", "सेव करें", "सुरक्षित करें", "ਸੇਵ ਕਰੋ",
+    ]) and page != "onboarding":
+        msg = "Saving section." if language == "en" else "సెక్షన్ భద్రపరచబడింది."
+        return {
+            "status": "success",
+            "action": "save_section",
+            "action_payload": {},
+            "requires_confirmation": False,
+            "spoken_response": msg,
+            "display_text": msg,
+            "language": language,
+        }
+
+    # Calculate Irrigation Requirements
+    if any(p in clean for p in [
+        "calculate irrigation requirements", "calculate irrigation requirement", "calculate irrigation",
+        "calculate requirements", "calculate water requirements",
+        "ఇరిగేషన్ అవసరాలను లెక్కించు", "ఇరిగేషన్ లెక్కించు", "నీటి అవసరం లెక్కించు",
+        "सिंचाई आवश्यकता की गणना करें", "सिंचाई की गणना करें", "ਸਿੰਚਾਈ ਲੋੜਾਂ ਦੀ ਗਣਨਾ ਕਰੋ",
+    ]):
+        msg = "Calculating irrigation requirements for your section." if language == "en" else "మీ సెక్షన్ కోసం ఇరిగేషన్ అవసరాలను లెక్కిస్తున్నాము."
+        return {
+            "status": "success",
+            "action": "run_irrigation_prediction",
+            "action_payload": {"trigger_calculation": True},
+            "requires_confirmation": False,
+            "spoken_response": msg,
+            "display_text": msg,
+            "language": language,
+        }
+
+    # Open Settings
+    if any(p in clean for p in ["open settings", "show settings", "settings", "సెట్టింగులు", "सेटिंग्स", "ਸੈਟਿੰਗ"]):
+        msg = "Opening Settings." if language == "en" else "సెట్టింగులను తెరుస్తున్నాము."
+        return {
+            "status": "success",
+            "action": "navigate_to_page",
+            "action_payload": {"target": "settings", "element_id": "farmerAccountBtn"},
+            "requires_confirmation": False,
+            "spoken_response": msg,
+            "display_text": msg,
+            "language": language,
+        }
+
+    # Show Irrigation Schedule
+    if any(p in clean for p in [
+        "show my irrigation schedule", "open irrigation schedule", "irrigation schedule", "show schedule", "open scheduler",
+        "నా ఇరిగేషన్ షెడ్యూల్ చూపించు", "షెడ్యూల్ చూపించు", "సిंचाई अनुसूची", "ਸਿੰਚਾਈ ਅਨੁਸੂਚੀ",
+    ]) and not ("generate" in clean or "create" in clean or "make" in clean or "calculate" in clean):
+        msg = "Showing your irrigation schedule." if language == "en" else "మీ ఇరిగేషన్ షెడ్యూల్‌ను చూపుతున్నాము."
+        return {
+            "status": "success",
+            "action": "navigate_to_page",
+            "action_payload": {"target": "irrigation_schedule", "element_id": "smartSchedulerCard"},
+            "requires_confirmation": False,
+            "spoken_response": msg,
+            "display_text": msg,
+            "language": language,
+        }
+
+    # Crop Selection by Name or Position (Ordinals)
+    is_crop_command = (
+        (
+            ("crop" in clean or "పంట" in clean or "फसल" in clean)
+            and any(w in clean for w in ["select", "choose", "change", "set", "ఎంచుకో", "మార్చు", "चुनो", "बदलें"])
+        )
+        or (
+            match_crop(clean) is not None
+            and any(w in clean for w in ["select", "choose", "change", "switch", "ఎంచుకో", "మార్చు", "चुनो", "बदलें"])
+        )
+    ) and not any(p in clean for p in [
+        "section", "land section", "add a section", "create section", "add section", "కొత్త సెక్షన్", "नया सेक्शन",
+        "open crop details", "crop details", "show crop details", "go to crop details"
+    ])
+
+    if is_crop_command:
+        crop_cand = match_crop(clean)
+        ord_idx_cand = extract_ordinal(clean)
+        if crop_cand:
+            msg = f"Selected {crop_cand}." if language == "en" else f"{crop_cand} పంట ఎంచుకోబడింది."
+            return {
+                "status": "success",
+                "action": "select_crop",
+                "action_payload": {"crop": crop_cand},
+                "requires_confirmation": False,
+                "spoken_response": msg,
+                "display_text": f"Selected crop: {crop_cand}",
+                "language": language,
+            }
+        elif ord_idx_cand is not None:
+            crop_num = ord_idx_cand + 1
+            msg = f"Selected crop number {crop_num}." if language == "en" else f"{crop_num}వ పంట ఎంచుకోబడింది."
+            return {
+                "status": "success",
+                "action": "select_crop",
+                "action_payload": {"crop_index": ord_idx_cand, "crop_number": crop_num},
+                "requires_confirmation": False,
+                "spoken_response": msg,
+                "display_text": f"Selected crop #{crop_num}",
+                "language": language,
+            }
+
     # Open Dashboard (All 23 Languages)
-    if any(p in clean for p in DASHBOARD_TRIGGERS):
+    if any(p in clean for p in DASHBOARD_TRIGGERS) or any(p in clean for p in ["return to dashboard", "back to dashboard", "go back to dashboard"]):
         msg = get_localized_message("nav_dashboard", language)
         return {
             "status": "success",
@@ -582,7 +768,8 @@ def process_voice_command(
 
     # Open Land Sections (General list, not specific section selection)
     if any(p in clean for p in [
-        "open land sections", "land sections", "show sections", "my sections", "manage sections",
+        "open my farm sections", "my farm sections", "farm sections", "open land sections", "land sections",
+        "show sections", "open sections", "my sections", "manage sections",
         "ల్యాండ్ సెక్షన్లు", "భూమి సెక్షన్లు", "సెక్షన్లు చూపించు",
         "जमीन अनुभाग", "सेक्शन दिखाओ", "ਜ਼ਮੀਨ ਦੇ ਸੈਕਸ਼ਨ",
     ]) and not any(p in clean for p in SELECT_SECTION_TRIGGERS) and not any(ord_w in clean for ord_w in ORDINALS.keys()):
@@ -1008,6 +1195,7 @@ def process_voice_command(
         is_mark_completed or is_skip_irrigation or is_calc_water or is_check_irrigation or is_explain_pred or is_gen_schedule
     ):
         sec, res_type = resolve_section_from_context(clean, sections, ctx)
+        ord_idx = extract_ordinal(clean)
         if sec:
             msg = get_localized_message("section_selected", language, name=sec["name"], crop=sec.get("crop", "Wheat"), area=sec.get("area_acres", 0.5))
             return {
@@ -1018,6 +1206,25 @@ def process_voice_command(
                     "section_name": sec["name"],
                     "crop": sec.get("crop", "Wheat"),
                     "area_acres": sec.get("area_acres", 0.5),
+                    "ordinal_index": ord_idx,
+                    "section_number": (ord_idx + 1) if ord_idx is not None else None,
+                },
+                "requires_confirmation": False,
+                "spoken_response": msg,
+                "display_text": msg,
+                "language": language,
+            }
+        elif ord_idx is not None:
+            target_name = f"Section 0{ord_idx + 1}"
+            msg = f"Selected {target_name}." if language == "en" else f"{target_name} ఎంచుకోబడింది."
+            return {
+                "status": "success",
+                "action": "select_section",
+                "action_payload": {
+                    "section_id": None,
+                    "section_name": target_name,
+                    "ordinal_index": ord_idx,
+                    "section_number": ord_idx + 1,
                 },
                 "requires_confirmation": False,
                 "spoken_response": msg,
