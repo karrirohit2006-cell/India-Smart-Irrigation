@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="theme-color" content="#0f172a">
+    <title>Super Admin Login | AgroSmart Management Portal</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='admin.css') }}">
+</head>
+<body class="admin-login-body">
+
+    <div class="admin-login-container">
+        <!-- Brand Header -->
+        <div class="admin-brand-header">
+            <div class="admin-brand-icon">🛡️</div>
+            <h1>AgroSmart Central Authority</h1>
+            <p>Private Super Admin Portal · System Owner Access Only</p>
+        </div>
+
+        <!-- Login Card -->
+        <div class="admin-login-card">
+            <div class="card-top-indicator">
+                <span class="secure-badge">🔒 256-Bit SSL · Authenticated Session</span>
+            </div>
+
+            <form id="adminLoginForm" class="admin-login-form" autocomplete="off">
+                <div class="admin-field-group">
+                    <label for="adminUsername">Administrator Username or Email</label>
+                    <div class="admin-input-wrap">
+                        <span class="admin-input-icon">👤</span>
+                        <input
+                            type="text"
+                            id="adminUsername"
+                            name="username"
+                            class="admin-input"
+                            placeholder="e.g. admin or superadmin@agrosmart.org"
+                            required
+                            autofocus
+                        />
+                    </div>
+                </div>
+
+                <div class="admin-field-group">
+                    <label for="adminPassword">Master Password</label>
+                    <div class="admin-input-wrap">
+                        <span class="admin-input-icon">🔑</span>
+                        <input
+                            type="password"
+                            id="adminPassword"
+                            name="password"
+                            class="admin-input"
+                            placeholder="••••••••••••"
+                            required
+                        />
+                    </div>
+                </div>
+
+                <!-- Error & Feedback Notice -->
+                <div id="adminLoginFeedback" class="admin-feedback-box" style="display: none;" role="alert"></div>
+
+                <button type="submit" id="btnAdminLogin" class="btn-admin-submit">
+                    <span id="adminLoginBtnText">Authenticate to Dashboard</span>
+                    <span aria-hidden="true">➜</span>
+                </button>
+            </form>
+
+            <div class="admin-security-footer">
+                <p>
+                    ⚠️ <strong>Restricted Access Notice:</strong> This private portal is reserved exclusively for the project owner. 
+                    Unauthorised access attempts are monitored and recorded with client IP address in administrative audit logs.
+                </p>
+                <div class="admin-login-links">
+                    <a href="/" class="admin-back-link">← Return to Farmer Portal</a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const adminLoginForm = document.getElementById("adminLoginForm");
+        const adminLoginFeedback = document.getElementById("adminLoginFeedback");
+        const btnAdminLogin = document.getElementById("btnAdminLogin");
+        const adminLoginBtnText = document.getElementById("adminLoginBtnText");
+
+        adminLoginForm.addEventListener("submit", async (e) => {
+            e.preventDefault();
+            const username = document.getElementById("adminUsername").value.trim();
+            const password = document.getElementById("adminPassword").value.trim();
+
+            if (!username || !password) return;
+
+            btnAdminLogin.disabled = true;
+            adminLoginBtnText.textContent = "Verifying Credentials...";
+            adminLoginFeedback.style.display = "none";
+
+            try {
+                const res = await fetch("/api/admin/auth/login", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ username, password })
+                });
+                const data = await res.json();
+
+                if (res.ok && data.status === "success") {
+                    adminLoginFeedback.style.display = "block";
+                    adminLoginFeedback.className = "admin-feedback-box feedback-success";
+                    adminLoginFeedback.textContent = "Authentication successful. Redirecting to Super Admin Dashboard...";
+                    setTimeout(() => {
+                        window.location.href = data.redirect || "/admin";
+                    }, 500);
+                } else {
+                    btnAdminLogin.disabled = false;
+                    adminLoginBtnText.textContent = "Authenticate to Dashboard";
+                    adminLoginFeedback.style.display = "block";
+                    adminLoginFeedback.className = "admin-feedback-box feedback-error";
+                    adminLoginFeedback.textContent = data.error || "Authentication failed.";
+                }
+            } catch (err) {
+                btnAdminLogin.disabled = false;
+                adminLoginBtnText.textContent = "Authenticate to Dashboard";
+                adminLoginFeedback.style.display = "block";
+                adminLoginFeedback.className = "admin-feedback-box feedback-error";
+                adminLoginFeedback.textContent = "Network error. Unable to reach server.";
+            }
+        });
+    </script>
+</body>
+</html>

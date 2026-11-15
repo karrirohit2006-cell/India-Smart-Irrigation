@@ -1,0 +1,6 @@
+# Netlify configuration for AI Smart Irrigation Planner
+# Points Netlify to the React/Vite frontend located in _legacy_project
+[build]
+  base = "_legacy_project"
+  command = "npm run build"
+  publish = "_legacy_project/dist"

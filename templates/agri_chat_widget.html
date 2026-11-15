@@ -1,0 +1,180 @@
+<!-- AgriSaathi Unified Multilingual AI Agricultural Chatbot Widget -->
+<div id="agriChatWidget" class="agri-chat-widget">
+    <!-- Floating Trigger Button -->
+    <button id="agriChatToggle" class="agri-chat-toggle" aria-label="Open AgriSaathi AI Agricultural Chatbot" aria-expanded="false" aria-controls="agriChatWindow" title="Open AgriSaathi AI Agricultural Chatbot">
+        <span class="agri-toggle-icon" aria-hidden="true">🌱</span>
+        <span class="agri-toggle-bot-icon" style="display:none;" aria-hidden="true">🤖</span>
+        <span class="agri-toggle-close-icon" aria-hidden="true">✕</span>
+        <span class="agri-toggle-badge" title="AgriSaathi Online"></span>
+    </button>
+
+    <!-- Floating Chat Window -->
+    <div id="agriChatWindow" class="agri-chat-window" role="dialog" aria-modal="false" aria-labelledby="agriChatHeaderTitle" hidden>
+        <!-- Chat Header -->
+        <header class="agri-chat-header">
+            <div class="agri-header-brand">
+                <div class="agri-avatar" aria-hidden="true">🌾</div>
+                <div class="agri-header-text">
+                    <h3 id="agriChatHeaderTitle">AgriSaathi</h3>
+                    <p id="agriChatSubtitle"><span class="agri-online-dot"></span> AI Agricultural Assistant</p>
+                </div>
+            </div>
+
+            <div class="agri-header-actions">
+                <!-- Chat Language Selector -->
+                <select id="agriChatLang" class="agri-chat-lang" aria-label="Select Chat Language">
+                    <option value="auto">🌐 Auto-Detect</option>
+                    <option value="en">English</option>
+                    <option value="hi">हिन्दी</option>
+                    <option value="pa">ਪੰਜਾਬੀ</option>
+                    <option value="te">తెలుగు</option>
+                    <option value="ta">தமிழ்</option>
+                    <option value="bn">বাংলা</option>
+                    <option value="mr">मराठी</option>
+                    <option value="gu">ગુજરાતી</option>
+                    <option value="kn">ಕನ್ನಡ</option>
+                    <option value="ml">മലയാളം</option>
+                    <option value="or">ଓଡ଼ିଆ</option>
+                    <option value="as">অসমীয়া</option>
+                    <option value="ur">اردو</option>
+                    <option value="sa">संस्कृतम्</option>
+                    <option value="ne">नेपाली</option>
+                    <option value="kok">कोंकणी</option>
+                    <option value="mai">मैथिली</option>
+                    <option value="doi">डोगरी</option>
+                    <option value="brx">बड़ो</option>
+                    <option value="ks">کٲشُر</option>
+                    <option value="sd">سنڌي</option>
+                    <option value="mni">মৈতৈলোন্</option>
+                    <option value="sat">ᱥᱟᱱᱛᱟᱲᱤ</option>
+                </select>
+
+                <!-- New Chat Button -->
+                <button id="agriNewChatBtn" class="agri-header-btn" type="button" aria-label="Start new chat" title="Start new chat">
+                    <span aria-hidden="true">➕</span>
+                </button>
+
+                <!-- Chat History Button -->
+                <button id="agriHistoryBtn" class="agri-header-btn" type="button" aria-label="View conversation history" title="View conversation history">
+                    <span aria-hidden="true">📜</span>
+                </button>
+
+                <!-- Clear Active Conversation Button -->
+                <button id="agriClearConvBtn" class="agri-header-btn" type="button" aria-label="Clear active conversation" title="Clear active conversation">
+                    <span aria-hidden="true">🧹</span>
+                </button>
+
+                <!-- Close Button -->
+                <button id="agriChatClose" class="agri-close-btn" type="button" aria-label="Close AgriSaathi Chat">
+                    <span aria-hidden="true">✕</span>
+                </button>
+            </div>
+        </header>
+
+        <!-- Conversation History Panel -->
+        <div id="agriHistoryPanel" class="agri-history-panel" style="display: none;" hidden aria-label="Chat History">
+            <div class="agri-history-header">
+                <div class="agri-history-title-wrap">
+                    <span class="agri-history-header-icon" aria-hidden="true">📜</span>
+                    <h4 id="agriHistoryTitle">Conversation History</h4>
+                </div>
+                <button type="button" id="agriHistoryCloseBtn" class="agri-history-close-btn" aria-label="Back to chat" title="Back to chat">
+                    <span aria-hidden="true">✕</span>
+                </button>
+            </div>
+
+            <div class="agri-history-toolbar">
+                <button type="button" id="agriNewChatFromHistoryBtn" class="agri-new-chat-action-btn">
+                    <span aria-hidden="true">➕</span>
+                    <span id="agriNewChatBtnText">Start New Chat</span>
+                </button>
+            </div>
+
+            <div id="agriHistoryList" class="agri-history-list" role="list">
+                <!-- Previous conversations rendered dynamically -->
+            </div>
+
+            <div class="agri-history-footer">
+                <button type="button" id="agriClearAllHistoryBtn" class="agri-clear-all-btn">
+                    <span aria-hidden="true">🗑️</span>
+                    <span id="agriClearAllBtnText">Clear All History</span>
+                </button>
+            </div>
+        </div>
+
+        <!-- Message History Area -->
+        <div id="agriChatMessages" class="agri-chat-messages" role="log" aria-live="polite">
+            <!-- Welcome Message Bubble -->
+            <div class="agri-msg-row agri-msg-assistant">
+                <div class="agri-msg-avatar" aria-hidden="true">🌱</div>
+                <div class="agri-msg-bubble">
+                    <div class="agri-msg-text" id="agriWelcomeText">
+                        Hello! I am <strong>AgriSaathi</strong>, your smart farming companion. How can I help you with your irrigation, soil health, crops, or website control today?
+                    </div>
+                    <span class="agri-msg-time">Just now</span>
+                </div>
+            </div>
+
+            <!-- Suggested Questions Section -->
+            <div class="agri-suggestions" id="agriSuggestions">
+                <p class="agri-suggestions-title" id="agriSuggestionsTitle">Suggested questions:</p>
+                <div class="agri-chips">
+                    <button type="button" class="agri-chip" data-question="How can I save irrigation water?">
+                        💧 How can I save irrigation water?
+                    </button>
+                    <button type="button" class="agri-chip" data-question="Why is soil moisture important?">
+                        🪴 Why is soil moisture important?
+                    </button>
+                    <button type="button" class="agri-chip" data-question="Tell me about paddy irrigation.">
+                        🌾 Tell me about paddy irrigation.
+                    </button>
+                    <button type="button" class="agri-chip" data-question="Help me understand my irrigation prediction.">
+                        📊 Help me understand my irrigation prediction.
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Typing / Loading Indicator -->
+        <div id="agriTypingIndicator" class="agri-typing-indicator" aria-hidden="true" style="display: none;">
+            <div class="agri-msg-avatar">🌱</div>
+            <div class="agri-typing-bubble">
+                <span class="agri-typing-dot"></span>
+                <span class="agri-typing-dot"></span>
+                <span class="agri-typing-dot"></span>
+            </div>
+            <span class="agri-typing-label" id="agriTypingLabel">AgriSaathi is thinking...</span>
+        </div>
+
+        <!-- Voice Recognition Listening Status Banner -->
+        <div id="agriVoiceStatus" class="agri-voice-status" style="display: none;" aria-live="polite">
+            <span class="agri-voice-pulse"></span>
+            <span id="agriVoiceStatusText" class="agri-voice-text">Listening... Speak now</span>
+            <button type="button" id="agriVoiceStopBtn" class="agri-voice-stop-btn" aria-label="Stop listening" title="Stop listening">✕</button>
+        </div>
+
+        <!-- Footer / Input Form -->
+        <form id="agriChatForm" class="agri-chat-footer" autocomplete="off">
+            <button
+                type="button"
+                id="agriMicBtn"
+                class="agri-mic-btn"
+                aria-label="Start voice input"
+                title="Speak to AgriSaathi (Click once to record, click again to stop and send)"
+            >
+                <span aria-hidden="true" class="agri-mic-icon">🎙️</span>
+            </button>
+            <input
+                type="text"
+                id="agriChatInput"
+                class="agri-chat-input"
+                placeholder="Ask or speak to AgriSaathi..."
+                aria-label="Type your message or use voice input"
+                maxlength="500"
+            />
+            <button type="submit" id="agriSendBtn" class="agri-send-btn" aria-label="Send message">
+                <span aria-hidden="true">➤</span>
+            </button>
+        </form>
+    </div>
+</div>

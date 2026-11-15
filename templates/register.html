@@ -1,0 +1,753 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Create Farmer Account — Smart Irrigation Planner</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <style>
+        :root {
+            --primary-green: #1b8e4f;
+            --primary-dark: #0f5132;
+            --primary-accent: #22c55e;
+            --card-bg: rgba(255, 255, 255, 0.96);
+            --text-dark: #1e293b;
+            --text-muted: #64748b;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+        }
+
+        body.auth-page {
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: linear-gradient(135deg, rgba(8, 38, 19, 0.82), rgba(15, 60, 32, 0.78)),
+                        url('https://images.unsplash.com/photo-1500937386664-56d1dfef3854?auto=format&fit=crop&w=1920&q=80') center/cover no-repeat fixed;
+            padding: 24px 16px;
+            color: #fff;
+            position: relative;
+        }
+
+        .auth-container {
+            width: 100%;
+            max-width: 480px;
+            position: relative;
+            z-index: 2;
+        }
+
+        .brand-header {
+            text-align: center;
+            margin-bottom: 22px;
+        }
+
+        .brand-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            background: rgba(255, 255, 255, 0.15);
+            backdrop-filter: blur(10px);
+            padding: 6px 16px;
+            border-radius: 999px;
+            border: 1px solid rgba(255, 255, 255, 0.25);
+            font-size: 13px;
+            font-weight: 600;
+            color: #dcfce7;
+            margin-bottom: 10px;
+        }
+
+        .brand-header h1 {
+            font-size: 28px;
+            font-weight: 800;
+            color: #ffffff;
+            letter-spacing: -0.5px;
+            text-shadow: 0 2px 10px rgba(0, 0, 0, 0.4);
+        }
+
+        .brand-subtext {
+            font-size: 14px;
+            color: #bbf7d0;
+            margin-top: 3px;
+        }
+
+        .auth-card {
+            background: var(--card-bg);
+            backdrop-filter: blur(20px);
+            border-radius: 20px;
+            padding: 32px 28px;
+            box-shadow: 0 20px 45px rgba(0, 0, 0, 0.35), 0 0 0 1px rgba(255, 255, 255, 0.4);
+            color: var(--text-dark);
+            animation: cardFadeUp 0.35s ease-out;
+        }
+
+        @keyframes cardFadeUp {
+            from { opacity: 0; transform: translateY(16px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .card-heading {
+            margin-bottom: 20px;
+            text-align: left;
+        }
+
+        .card-heading h2 {
+            font-size: 22px;
+            font-weight: 700;
+            color: #0f172a;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .card-heading p {
+            font-size: 13px;
+            color: var(--text-muted);
+            margin-top: 4px;
+        }
+
+        .form-group {
+            margin-bottom: 18px;
+            text-align: left;
+        }
+
+        .form-label {
+            display: block;
+            font-size: 13px;
+            font-weight: 600;
+            color: #334155;
+            margin-bottom: 6px;
+        }
+
+        .input-wrap {
+            position: relative;
+            display: flex;
+            align-items: center;
+        }
+
+        .input-icon {
+            position: absolute;
+            left: 14px;
+            font-size: 15px;
+            color: #64748b;
+            pointer-events: none;
+        }
+
+        .form-input {
+            width: 100%;
+            padding: 12px 42px 12px 42px;
+            font-size: 14px;
+            border: 1.5px solid #cbd5e1;
+            border-radius: 10px;
+            background: #ffffff;
+            color: #0f172a;
+            outline: none;
+            transition: all 0.2s ease;
+        }
+
+        .form-input:focus {
+            border-color: var(--primary-green);
+            box-shadow: 0 0 0 3px rgba(34, 197, 94, 0.2);
+        }
+
+        .password-toggle-btn {
+            position: absolute;
+            right: 12px;
+            background: transparent;
+            border: none;
+            font-size: 16px;
+            cursor: pointer;
+            color: #64748b;
+            padding: 4px;
+        }
+
+        .password-toggle-btn:hover {
+            color: #0f172a;
+        }
+
+        .btn-submit {
+            width: 100%;
+            background: var(--primary-green);
+            color: #ffffff;
+            border: none;
+            padding: 13px 20px;
+            border-radius: 10px;
+            font-size: 15px;
+            font-weight: 700;
+            cursor: pointer;
+            transition: background 0.2s ease, transform 0.1s ease;
+            box-shadow: 0 4px 12px rgba(27, 142, 79, 0.25);
+            margin-top: 8px;
+        }
+
+        .btn-submit:hover {
+            background: var(--primary-dark);
+            transform: translateY(-1px);
+        }
+
+        .btn-submit:active {
+            transform: translateY(1px);
+        }
+
+        .auth-alert {
+            padding: 12px 14px;
+            border-radius: 10px;
+            font-size: 13px;
+            line-height: 1.4;
+            margin-bottom: 18px;
+            display: none;
+        }
+
+        .auth-alert.error { background: #fef2f2; color: #991b1b; border: 1px solid #fecaca; }
+        .auth-alert.success { background: #f0fdf4; color: #166534; border: 1px solid #bbf7d0; }
+        .auth-alert.info { background: #f0f9ff; color: #075985; border: 1px solid #bae6fd; }
+
+        .card-footer {
+            margin-top: 22px;
+            text-align: center;
+            font-size: 13px;
+            color: #475569;
+            border-top: 1px solid #e2e8f0;
+            padding-top: 16px;
+        }
+
+        .card-footer a {
+            color: var(--primary-green);
+            font-weight: 700;
+            text-decoration: none;
+        }
+
+        .card-footer a:hover {
+            text-decoration: underline;
+        }
+
+        /* Face Lock Setup Screen (Modal Overlay) */
+        .modal-overlay {
+            position: fixed;
+            inset: 0;
+            background: rgba(15, 23, 42, 0.78);
+            backdrop-filter: blur(8px);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 16px;
+            z-index: 1000;
+            animation: fadeIn 0.25s ease;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+
+        .face-lock-setup-card {
+            background: #ffffff;
+            border-radius: 22px;
+            padding: 32px 28px;
+            max-width: 440px;
+            width: 100%;
+            text-align: center;
+            color: var(--text-dark);
+            box-shadow: 0 25px 50px rgba(0, 0, 0, 0.35);
+        }
+
+        .face-lock-icon-wrap {
+            width: 72px;
+            height: 72px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #dcfce7, #bbf7d0);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 16px auto;
+            font-size: 34px;
+            box-shadow: 0 8px 18px rgba(34, 197, 94, 0.25);
+        }
+
+        .face-lock-setup-card h3 {
+            font-size: 21px;
+            font-weight: 800;
+            color: #0f172a;
+            margin-bottom: 8px;
+        }
+
+        .face-lock-setup-card .hero-msg {
+            font-size: 15px;
+            font-weight: 700;
+            color: var(--primary-dark);
+            margin-bottom: 8px;
+        }
+
+        .face-lock-setup-card p {
+            font-size: 13.5px;
+            color: var(--text-muted);
+            line-height: 1.5;
+            margin-bottom: 22px;
+        }
+
+        .privacy-note {
+            background: #f8fafc;
+            border: 1px solid #e2e8f0;
+            border-radius: 10px;
+            padding: 10px 12px;
+            font-size: 12px;
+            color: #475569;
+            text-align: left;
+            margin-bottom: 20px;
+            display: flex;
+            gap: 8px;
+            align-items: flex-start;
+        }
+
+        .setup-actions {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .btn-enable-facelock {
+            background: linear-gradient(135deg, #059669, #10b981);
+            color: #ffffff;
+            border: none;
+            padding: 14px 20px;
+            border-radius: 12px;
+            font-size: 15px;
+            font-weight: 700;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            box-shadow: 0 6px 18px rgba(16, 185, 129, 0.35);
+            transition: all 0.2s ease;
+        }
+
+        .btn-enable-facelock:hover {
+            background: linear-gradient(135deg, #047857, #059669);
+            transform: translateY(-1px);
+        }
+
+        .btn-skip-facelock {
+            background: transparent;
+            border: none;
+            color: #64748b;
+            font-size: 13.5px;
+            font-weight: 600;
+            cursor: pointer;
+            padding: 10px;
+            transition: color 0.15s;
+        }
+
+        .btn-skip-facelock:hover {
+            color: #0f172a;
+            text-decoration: underline;
+        }
+
+        .setup-feedback {
+            margin-top: 12px;
+            padding: 10px 12px;
+            border-radius: 8px;
+            font-size: 13px;
+            display: none;
+        }
+
+        .setup-feedback.error { background: #fef2f2; color: #991b1b; }
+        .setup-feedback.success { background: #f0fdf4; color: #166534; }
+        .setup-feedback.info { background: #eff6ff; color: #1d4ed8; }
+    </style>
+</head>
+<body class="auth-page">
+    <div class="auth-container">
+        <!-- Top Navigation: Compact 23-Language Selector, Global Speaker & Global Voice Mic -->
+        <div class="auth-top-controls global-top-controls" id="globalTopControls">
+            <div class="lang-selector-compact">
+                <span class="globe-icon" aria-hidden="true">🌐</span>
+                <select id="languageSelect" class="lang-selector" aria-label="Select Application Language">
+                    <option value="en">English (English)</option>
+                    <option value="hi">हिन्दी (Hindi)</option>
+                    <option value="te">తెలుగు (Telugu)</option>
+                    <option value="pa">ਪੰਜਾਬੀ (Punjabi)</option>
+                    <option value="ta">தமிழ் (Tamil)</option>
+                    <option value="bn">বাংলা (Bengali)</option>
+                    <option value="mr">मराठी (Marathi)</option>
+                    <option value="gu">ગુજરાતી (Gujarati)</option>
+                    <option value="kn">ಕನ್ನಡ (Kannada)</option>
+                    <option value="ml">മലയാളം (Malayalam)</option>
+                    <option value="or">ଓଡ଼ିଆ (Odia)</option>
+                    <option value="as">অসমীয়া (Assamese)</option>
+                    <option value="ur">اردو (Urdu)</option>
+                    <option value="sa">संस्कृतम् (Sanskrit)</option>
+                    <option value="ne">नेपाली (Nepali)</option>
+                    <option value="kok">कोंकणी (Konkani)</option>
+                    <option value="mai">मैथिली (Maithili)</option>
+                    <option value="doi">डोगरी (Dogri)</option>
+                    <option value="brx">बड़ो (Bodo)</option>
+                    <option value="ks">کٲشُر (Kashmiri)</option>
+                    <option value="sd">سنڌي (Sindhi)</option>
+                    <option value="mni">মৈতৈলোন্ (Manipuri)</option>
+                    <option value="sat">ᱥᱟᱱᱛᱟᱲᱤ (Santali)</option>
+                </select>
+            </div>
+
+            <!-- Right side: Three separate icon-only buttons, aligned horizontally -->
+            <div class="header-controls-right" id="headerControlsRight">
+                <!-- 1. Speaker icon – Text-to-Speech ON/OFF -->
+                <button type="button" id="btnAudioListen" class="header-icon-btn btn-top-control btn-circular-audio btn-speaker-read" aria-label="Speaker ON / OFF" title="Speaker ON - Click to read page content">
+                    <span aria-hidden="true" class="speaker-icon">🔈</span>
+                </button>
+
+                <!-- 2. Pause icon – Pause/Resume speech -->
+                <button type="button" id="btnAudioPause" class="header-icon-btn btn-top-control btn-circular-audio btn-speaker-pause" aria-label="Pause / Resume Speech" title="Pause / Resume" disabled>
+                    <span aria-hidden="true" class="pause-icon">⏸️</span>
+                </button>
+                <button type="button" id="btnAudioMute" style="display:none;" aria-hidden="true" tabindex="-1"></button>
+
+                <!-- 3. Microphone icon – Voice Assistant -->
+                <div class="website-voice-assistant" id="websiteVoiceAssistant" title="Website Voice Control">
+                    <button type="button" id="btnVoiceNavMic" class="header-icon-btn btn-top-control btn-circular-va btn-global-mic" aria-label="Control Website with Voice" title="Voice Control (Click once to record, click again to stop and execute)">
+                        <span aria-hidden="true" class="mic-icon">🎙️</span>
+                        <span class="mic-recording-pulse" id="vaRecordingDot" style="display:none;" aria-hidden="true"></span>
+                    </button>
+                    <span id="vaNavStatusPill" class="va-nav-status-pill" style="display:none;" aria-live="polite">Ready</span>
+                    <span id="btnVoiceSpeakerToggle" style="display:none;" aria-hidden="true">
+                        <span id="vaSpeakerIcon"></span><span id="vaSpeakerBadge"></span>
+                    </span>
+                    <span id="btnVoiceGuide" style="display: none;" aria-hidden="true"></span>
+                    <span id="btnVoiceMic" style="display: none;" aria-hidden="true"></span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Brand Header -->
+        <div class="brand-header">
+            <div class="brand-badge">
+                <span>🌱</span>
+                <span data-i18n="subtext">AI-Powered Agriculture & Precision Water Management</span>
+            </div>
+            <h1 data-i18n="welcomeHeader">Smart Irrigation Planner</h1>
+            <p class="brand-subtext" data-i18n="tagline">Grow smarter. Save water. Farm better.</p>
+        </div>
+
+        <!-- Registration Card -->
+        <div class="auth-card" id="cardRegister">
+            <div class="card-heading">
+                <h2><span>📝</span> Create Account</h2>
+                <p>Choose your username and password to get started</p>
+            </div>
+
+            <!-- Validation & Feedback Alert -->
+            <div id="regAlert" class="auth-alert" role="alert"></div>
+
+            <!-- Create Account Form: Contains ONLY Username, Password, Confirm Password, Create Account button -->
+            <form id="formFarmerRegister" novalidate autocomplete="on">
+                <!-- 1. Username -->
+                <div class="form-group">
+                    <label class="form-label" for="regUsername">Username *</label>
+                    <div class="input-wrap">
+                        <span class="input-icon">👤</span>
+                        <input type="text" id="regUsername" name="username" class="form-input" placeholder="Choose a unique username" required autocomplete="username" minlength="3">
+                    </div>
+                </div>
+
+                <!-- 2. Password with Show/Hide Control -->
+                <div class="form-group">
+                    <label class="form-label" for="regPassword">Password *</label>
+                    <div class="input-wrap">
+                        <span class="input-icon">🔒</span>
+                        <input type="password" id="regPassword" name="password" class="form-input" placeholder="Enter password (min 6 characters)" required autocomplete="new-password" minlength="6">
+                        <button type="button" id="btnToggleRegPassword" class="password-toggle-btn" aria-label="Toggle password visibility">👁️</button>
+                    </div>
+                </div>
+
+                <!-- 3. Confirm Password with Show/Hide Control -->
+                <div class="form-group">
+                    <label class="form-label" for="regConfirmPassword">Confirm Password *</label>
+                    <div class="input-wrap">
+                        <span class="input-icon">🔒</span>
+                        <input type="password" id="regConfirmPassword" name="confirm_password" class="form-input" placeholder="Re-enter your password" required autocomplete="new-password" minlength="6">
+                        <button type="button" id="btnToggleRegConfirmPassword" class="password-toggle-btn" aria-label="Toggle confirm password visibility">👁️</button>
+                    </div>
+                </div>
+
+                <!-- 4. Create Account Button -->
+                <button type="submit" id="btnCreateAccount" class="btn-submit">
+                    Create Account
+                </button>
+            </form>
+
+            <div class="card-footer">
+                Already registered? <a href="/">Sign In here</a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Face Lock Setup Screen (Appears immediately after account creation) -->
+    <div id="faceLockSetupModal" class="modal-overlay" style="display: none;" role="dialog" aria-modal="true" aria-labelledby="faceLockTitle">
+        <div class="face-lock-setup-card">
+            <div class="face-lock-icon-wrap" aria-hidden="true">
+                <span>👤</span>
+            </div>
+            <h3 id="faceLockTitle">Face Lock Setup</h3>
+            <div class="hero-msg">Enable Face Lock for faster and secure login.</div>
+            <p>
+                Use your device's native Face Unlock, fingerprint sensor, or device PIN to sign in instantly next time without typing your password.
+            </p>
+
+            <div class="privacy-note">
+                <span>🔒</span>
+                <div>
+                    <strong>100% Private &amp; Secure:</strong> Biometric scans never leave your device. The server only validates cryptographic proof via W3C WebAuthn / Passkeys.
+                </div>
+            </div>
+
+            <div id="setupFeedback" class="setup-feedback"></div>
+
+            <div class="setup-actions">
+                <button type="button" id="btnEnableFaceLock" class="btn-enable-facelock">
+                    <span>🔐</span>
+                    <span>Enable Face Lock</span>
+                </button>
+                <button type="button" id="btnSkipFaceLock" class="btn-skip-facelock">
+                    Skip for Now
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // WebAuthn domain standardization: seamlessly redirect 127.0.0.1 to localhost
+        if (window.location.hostname === '127.0.0.1') {
+            window.location.replace(window.location.href.replace('://127.0.0.1', '://localhost'));
+        }
+
+        // Utilities
+        function showAlert(msg, type = "error") {
+            const el = document.getElementById("regAlert");
+            el.className = `auth-alert ${type}`;
+            el.textContent = msg;
+            el.style.display = "block";
+        }
+
+        function hideAlert() {
+            document.getElementById("regAlert").style.display = "none";
+        }
+
+        function showSetupFeedback(msg, type = "info") {
+            const el = document.getElementById("setupFeedback");
+            el.className = `setup-feedback ${type}`;
+            el.textContent = msg;
+            el.style.display = "block";
+        }
+
+        // Show/hide password controls
+        function setupPasswordToggle(inputId, toggleBtnId) {
+            const input = document.getElementById(inputId);
+            const btn = document.getElementById(toggleBtnId);
+            if (!input || !btn) return;
+            btn.addEventListener("click", () => {
+                const isPassword = input.type === "password";
+                input.type = isPassword ? "text" : "password";
+                btn.textContent = isPassword ? "🙈" : "👁️";
+            });
+        }
+        setupPasswordToggle("regPassword", "btnToggleRegPassword");
+        setupPasswordToggle("regConfirmPassword", "btnToggleRegConfirmPassword");
+
+        // WebAuthn buffer conversion helpers
+        function base64UrlToBuffer(base64url) {
+            let base64 = base64url.replace(/-/g, "+").replace(/_/g, "/");
+            while (base64.length % 4) base64 += "=";
+            const binary = atob(base64);
+            const bytes = new Uint8Array(binary.length);
+            for (let i = 0; i < binary.length; i++) bytes[i] = binary.charCodeAt(i);
+            return bytes.buffer;
+        }
+
+        function bufferToBase64Url(buffer) {
+            const bytes = new Uint8Array(buffer);
+            let binary = "";
+            for (let i = 0; i < bytes.byteLength; i++) binary += String.fromCharCode(bytes[i]);
+            return btoa(binary).replace(/\+/g, "-").replace(/\//g, "_").replace(/=/g, "");
+        }
+
+        // Handle Account Creation
+        const formRegister = document.getElementById("formFarmerRegister");
+        const btnCreate = document.getElementById("btnCreateAccount");
+        const faceLockModal = document.getElementById("faceLockSetupModal");
+        const btnEnableFaceLock = document.getElementById("btnEnableFaceLock");
+        const btnSkipFaceLock = document.getElementById("btnSkipFaceLock");
+
+        let createdFarmer = null;
+
+        formRegister.addEventListener("submit", async (e) => {
+            e.preventDefault();
+            hideAlert();
+
+            const username = document.getElementById("regUsername").value.trim();
+            const password = document.getElementById("regPassword").value.trim();
+            const confirmPassword = document.getElementById("regConfirmPassword").value.trim();
+
+            // Client-side field validations
+            if (!username) {
+                showAlert("Username is required.");
+                document.getElementById("regUsername").focus();
+                return;
+            }
+            if (username.length < 3) {
+                showAlert("Username must be at least 3 characters long.");
+                document.getElementById("regUsername").focus();
+                return;
+            }
+            if (!password) {
+                showAlert("Password is required.");
+                document.getElementById("regPassword").focus();
+                return;
+            }
+            if (password.length < 6) {
+                showAlert("Password must be at least 6 characters long.");
+                document.getElementById("regPassword").focus();
+                return;
+            }
+            if (!confirmPassword) {
+                showAlert("Please confirm your password.");
+                document.getElementById("regConfirmPassword").focus();
+                return;
+            }
+            if (password !== confirmPassword) {
+                showAlert("Passwords do not match. Please re-enter.");
+                document.getElementById("regConfirmPassword").focus();
+                return;
+            }
+
+            btnCreate.disabled = true;
+            btnCreate.textContent = "Creating Account...";
+
+            try {
+                const res = await fetch("/api/auth/register", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({
+                        username,
+                        password,
+                        confirm_password: confirmPassword,
+                    })
+                });
+
+                const data = await res.json();
+
+                if (res.ok && data.status === "success") {
+                    createdFarmer = data.farmer;
+                    showAlert("Account created successfully!", "success");
+                    // Step 3: Display Face Lock setup screen
+                    setTimeout(() => {
+                        faceLockModal.style.display = "flex";
+                    }, 400);
+                } else {
+                    showAlert(data.error || "Failed to create account. Please try again.");
+                    btnCreate.disabled = false;
+                    btnCreate.textContent = "Create Account";
+                }
+            } catch (err) {
+                showAlert("Network error while creating account. Please check your connection.");
+                btnCreate.disabled = false;
+                btnCreate.textContent = "Create Account";
+            }
+        });
+
+        // Face Lock Setup Actions
+        btnSkipFaceLock.addEventListener("click", () => {
+            // User chose Skip for Now -> proceed directly to onboarding
+            window.location.href = "/onboarding";
+        });
+
+        btnEnableFaceLock.addEventListener("click", async () => {
+            // Check native WebAuthn support
+            if (!window.PublicKeyCredential) {
+                showSetupFeedback("Face Lock / Biometrics is not supported on this browser. Proceeding to onboarding...", "info");
+                setTimeout(() => {
+                    window.location.href = "/onboarding";
+                }, 1500);
+                return;
+            }
+
+            btnEnableFaceLock.disabled = true;
+            btnEnableFaceLock.innerHTML = '<span>Verifying Sensor...</span>';
+            showSetupFeedback("Please verify with Face Unlock, fingerprint, or device PIN...", "info");
+
+            try {
+                // 1. Request WebAuthn registration options from server
+                const optRes = await fetch("/api/auth/passkey/register-options", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                });
+
+                if (!optRes.ok) {
+                    const errData = await optRes.json();
+                    throw new Error(errData.error || "Could not initialize Face Lock options.");
+                }
+
+                const options = await optRes.json();
+                options.challenge = base64UrlToBuffer(options.challenge);
+                options.user.id = base64UrlToBuffer(options.user.id);
+                if (options.excludeCredentials && Array.isArray(options.excludeCredentials)) {
+                    options.excludeCredentials = options.excludeCredentials.map(c => ({
+                        ...c,
+                        id: base64UrlToBuffer(c.id)
+                    }));
+                }
+
+                // 2. Trigger native device biometric prompt (Face Unlock / Fingerprint / PIN)
+                const credential = await navigator.credentials.create({ publicKey: options });
+                if (!credential) {
+                    throw new Error("No credential was returned from device.");
+                }
+
+                // 3. Serialize credential for backend verification
+                const credentialJson = {
+                    id: credential.id,
+                    rawId: bufferToBase64Url(credential.rawId),
+                    type: credential.type,
+                    response: {
+                        attestationObject: bufferToBase64Url(credential.response.attestationObject),
+                        clientDataJSON: bufferToBase64Url(credential.response.clientDataJSON),
+                        transports: credential.response.getTransports ? credential.response.getTransports() : [],
+                    }
+                };
+
+                // 4. Send to server for cryptographic verification and storage
+                const verifyRes = await fetch("/api/auth/passkey/register-verify", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ credential: credentialJson })
+                });
+
+                const verifyData = await verifyRes.json();
+
+                if (verifyRes.ok && verifyData.status === "success") {
+                    showSetupFeedback("✅ Face Lock enabled successfully! Redirecting to farm onboarding...", "success");
+                    setTimeout(() => {
+                        window.location.href = "/onboarding";
+                    }, 1200);
+                } else {
+                    throw new Error(verifyData.error || "Face Lock verification failed.");
+                }
+            } catch (err) {
+                console.warn("Face Lock enrollment error:", err);
+                btnEnableFaceLock.disabled = false;
+                btnEnableFaceLock.innerHTML = '<span>🔐</span><span>Enable Face Lock</span>';
+                if (err.name === "NotAllowedError") {
+                    showSetupFeedback("Face Lock setup was cancelled. You can enable it later from Settings or click Skip for Now.", "error");
+                } else {
+                    showSetupFeedback(err.message || "Failed to setup Face Lock on this device. You can skip for now.", "error");
+                }
+            }
+        });
+    </script>
+    <script src="{{ url_for('static', filename='i18n.js') }}"></script>
+    <script src="{{ url_for('static', filename='voice_controller.js') }}"></script>
+</body>
+</html>

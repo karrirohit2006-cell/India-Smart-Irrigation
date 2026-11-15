@@ -74,3 +74,10 @@ ehthumbs.db
 [Dd]esktop.ini
 git.cmd
 git.ps1
+
+# --- Checkpoints, Backups & Runtime Caches ---
+_checkpoints/
+_legacy_irrigation_backup/
+scratch/
+data/tts_cache/
+data/irrigation_schedules.db

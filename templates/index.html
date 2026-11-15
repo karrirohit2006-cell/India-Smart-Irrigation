@@ -9,8 +9,23 @@
 
     <link rel="stylesheet"
           href="{{ url_for('static', filename='style.css') }}">
+    <link rel="stylesheet"
+          href="{{ url_for('static', filename='admin.css') }}">
 </head>
 <body>
+
+    <!-- Super Admin Impersonation Notice Banner -->
+    <div id="adminImpersonationBanner" class="admin-impersonation-banner" style="display: none;">
+        <div class="impersonation-banner-inner">
+            <div class="impersonation-text">
+                <strong>⚠️ ADMINISTRATIVE INSPECTION MODE</strong>
+                <span>Currently viewing farmer account <span id="bannerFarmerName">--</span> (ID: <code id="bannerFarmerId">--</code>) with diagnostic authority.</span>
+            </div>
+            <a href="/api/admin/exit-impersonation" class="btn-exit-impersonation" id="btnExitImpersonation">
+                <span>✕ Exit to Admin Dashboard</span>
+            </a>
+        </div>
+    </div>
 
     <!-- Top navigation -->
     <header class="topbar">
@@ -23,97 +38,286 @@
         </a>
 
         <div class="top-actions">
-            <div class="language-box">
-                <label for="language" data-i18n="languageLabel">
-                    Choose Language
-                </label>
-                <select id="language">
-                    <option value="en">English</option>
-                    <option value="hi">हिन्दी</option>
-                    <option value="pa">ਪੰਜਾਬੀ</option>
-                    <option value="te">తెలుగు</option>
-                </select>
+            <!-- Combined Global Farm Calendar Toggle Button -->
+            <button type="button" id="btnGlobalCalendarToggle" class="btn-global-cal-toggle" title="View Combined Farm Irrigation Calendar" aria-label="Open Combined Farm Calendar">
+                <span aria-hidden="true" class="top-btn-icon">📅</span>
+                <span class="global-cal-text">Combined Calendar</span>
+                <span class="cal-badge" id="globalCalBadge" style="display: none;">0</span>
+            </button>
+
+            <!-- Farmer Profile & Account Menu -->
+            <div class="farmer-account-wrap" id="farmerAccountWrap">
+                <button type="button" id="farmerAccountBtn" class="farmer-account-btn" aria-haspopup="true" aria-expanded="false" title="Farmer Profile & Settings">
+                    <span class="farmer-avatar" aria-hidden="true">👨‍🌾</span>
+                    <div class="farmer-btn-text">
+                        <span id="farmerNameDisplay" class="farmer-name">Farmer Profile</span>
+                        <small id="farmerLocationDisplay" class="farmer-location">Manage Land & Crops</small>
+                    </div>
+                    <span class="caret-icon" aria-hidden="true">▾</span>
+                </button>
+
+                <!-- Farmer Account Dropdown Menu -->
+                <div id="farmerDropdownMenu" class="farmer-dropdown-menu" style="display: none;">
+                    <div class="dropdown-farmer-info" id="dropdownFarmerInfo">
+                        <strong id="dropdownFarmerName">Authenticated Farmer</strong>
+                        <span id="dropdownFarmerUsername" class="dropdown-sub-text">--</span>
+                        <div class="dropdown-badges">
+                            <span id="dropdownFarmerLand" class="land-badge">-- Acres</span>
+                            <span id="dropdownFarmerLocation" class="loc-badge">--</span>
+                        </div>
+                    </div>
+                    <div class="dropdown-divider"></div>
+                    <div class="dropdown-actions">
+                        <button type="button" id="dropdownManageDevicesBtn" class="dropdown-btn-action" style="display: none;">
+                            <span>👤</span>
+                            <span>Face Lock &amp; Settings</span>
+                        </button>
+                        <button type="button" id="dropdownAuthBtn" class="dropdown-btn-action">
+                            <span id="dropdownAuthIcon">🔑</span>
+                            <span id="dropdownAuthLabel">Account Details</span>
+                        </button>
+                    </div>
+                </div>
             </div>
+
+            <!-- Global Top Controls: Language Selector on Left, 3 Icon Buttons on Right -->
+            <div class="global-top-controls" id="globalTopControls">
+                <!-- Left side: Language selector -->
+                <div class="lang-selector-compact">
+                    <span class="globe-icon" aria-hidden="true">🌐</span>
+                    <select id="language" class="lang-selector" aria-label="Select Application Language">
+                        <option value="en">English (English)</option>
+                        <option value="hi">हिन्दी (Hindi)</option>
+                        <option value="te">తెలుగు (Telugu)</option>
+                        <option value="pa">ਪੰਜਾਬੀ (Punjabi)</option>
+                        <option value="ta">தமிழ் (Tamil)</option>
+                        <option value="bn">বাংলা (Bengali)</option>
+                        <option value="mr">मराठी (Marathi)</option>
+                        <option value="gu">ગુજરાતી (Gujarati)</option>
+                        <option value="kn">ಕನ್ನಡ (Kannada)</option>
+                        <option value="ml">മലയാളം (Malayalam)</option>
+                        <option value="or">ଓଡ଼ିଆ (Odia)</option>
+                        <option value="as">অসমীয়া (Assamese)</option>
+                        <option value="ur">اردو (Urdu)</option>
+                        <option value="sa">संस्कृतम् (Sanskrit)</option>
+                        <option value="ne">नेपाली (Nepali)</option>
+                        <option value="kok">कोंकणी (Konkani)</option>
+                        <option value="mai">मैथिली (Maithili)</option>
+                        <option value="doi">डोगरी (Dogri)</option>
+                        <option value="brx">बड़ो (Bodo)</option>
+                        <option value="ks">کٲشُر (Kashmiri)</option>
+                        <option value="sd">سنڌي (Sindhi)</option>
+                        <option value="mni">মৈতৈলোন্ (Manipuri)</option>
+                        <option value="sat">ᱥᱟᱱᱛᱟᱲᱤ (Santali)</option>
+                    </select>
+                </div>
+
+                <!-- Right side: Three separate icon-only buttons, aligned horizontally -->
+                <div class="header-controls-right" id="headerControlsRight">
+                    <!-- 1. Speaker icon – Text-to-Speech ON/OFF -->
+                    <button type="button" id="btnAudioListen" class="header-icon-btn btn-top-control btn-circular-audio btn-speaker-read" aria-label="Speaker ON / OFF" title="Speaker ON - Click to read page content">
+                        <span aria-hidden="true" class="speaker-icon">🔈</span>
+                    </button>
+
+                    <!-- 2. Pause icon – Pause/Resume speech -->
+                    <button type="button" id="btnAudioPause" class="header-icon-btn btn-top-control btn-circular-audio btn-speaker-pause" aria-label="Pause / Resume Speech" title="Pause / Resume" disabled>
+                        <span aria-hidden="true" class="pause-icon">⏸️</span>
+                    </button>
+                    <button type="button" id="btnAudioMute" style="display:none;" aria-hidden="true" tabindex="-1"></button>
+
+                    <!-- 3. Microphone icon – Voice Assistant -->
+                    <div id="websiteVoiceAssistant" class="website-voice-assistant" title="Website Voice Control">
+                        <button type="button" id="btnVoiceSpeakerToggle" style="display:none;" aria-hidden="true">
+                            <span id="vaSpeakerIcon" aria-hidden="true">🔊</span>
+                            <span id="vaSpeakerBadge" class="va-speaker-badge va-badge-on">ON</span>
+                        </button>
+                        <button type="button" id="btnVoiceNavMic" class="header-icon-btn btn-top-control btn-circular-va btn-global-mic" aria-label="Control Website with Voice" title="Voice Control (Click once to record, click again to stop and execute)">
+                            <span aria-hidden="true" class="mic-icon">🎙️</span>
+                            <span class="mic-recording-pulse" id="vaRecordingDot" style="display:none;" aria-hidden="true"></span>
+                        </button>
+                        <span id="vaNavStatusPill" class="va-nav-status-pill" style="display:none;" aria-live="polite">Ready</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Direct Logout Link -->
+            <a href="/logout" class="btn-topbar-logout" id="topbarLogoutBtn" title="Sign Out of Farmer Account" style="text-decoration:none; display:inline-flex; align-items:center; gap:5px; padding:7px 12px; background:rgba(220, 38, 38, 0.08); color:#dc2626; border:1px solid rgba(220, 38, 38, 0.25); border-radius:8px; font-size:12px; font-weight:700; transition:all 0.2s;">
+                <span>🚪</span>
+                <span>Logout</span>
+            </a>
         </div>
     </header>
 
-    <!-- Agricultural hero banner -->
-    <section class="hero">
-        <div class="hero-content">
-            <span class="hero-eyebrow">🌱 SMART FARMING TECHNOLOGY</span>
+    <!-- Hidden sensor hooks for legacy JS compatibility -->
+    <div style="display:none;" aria-hidden="true">
+        <span id="heroMoisture">--</span>
+        <span id="heroTemperature">-- °C</span>
+        <span id="heroHumidity">--%</span>
+    </div>
 
-            <h1 data-i18n="welcome">
-                Let's check your field
-            </h1>
+    <!-- Centered Dashboard Container (max-width: 1240px; margin: 0 auto;) -->
+    <div id="landManagementModule" class="dashboard-main-container">
 
-            <p data-i18n="intro">
-                Enter your crop and sensor readings.
-            </p>
-
-            <div class="benefits">
-                <div class="benefit">
-                    <span class="benefit-icon">💧</span>
-                    <span>
-                        <strong>Save Water</strong>
-                        <small>Use water thoughtfully</small>
-                    </span>
-                </div>
-
-                <div class="benefit">
-                    <span class="benefit-icon">🌱</span>
-                    <span>
-                        <strong>Healthier Crops</strong>
-                        <small>Support crop growth</small>
-                    </span>
-                </div>
-
-                <div class="benefit">
-                    <span class="benefit-icon">📈</span>
-                    <span>
-                        <strong>AI Assistance</strong>
-                        <small>Data-based estimates</small>
-                    </span>
-                </div>
-            </div>
-        </div>
-
-        <div class="hero-sensors" aria-label="Example sensor indicators">
-            <div class="floating-sensor sensor-moisture">
-                <span>💧</span>
-                <div>
-                    <small>Soil Moisture</small>
-                    <strong id="heroMoisture">--</strong>
+        <!-- SECTION 1: Farm Overview (4 compact cards in one row + proportional progress bar) -->
+        <section id="sectionFarmOverview" class="dashboard-section farm-overview-card" aria-label="Farm Overview & Land Summary">
+            <div class="farm-banner-top">
+                <div class="farm-info-group">
+                    <span class="farm-icon" aria-hidden="true">🏡</span>
+                    <div class="farm-details">
+                        <div class="farm-name-row">
+                            <h2 id="farmTitleText">Farm Dashboard</h2>
+                            <span class="farm-verified-pill" id="farmAccountBadge">Active Farm</span>
+                        </div>
+                        <p id="farmLocationText" class="farm-location-sub">
+                            📍 Loading farm location...
+                        </p>
+                    </div>
                 </div>
             </div>
 
-            <div class="floating-sensor sensor-temperature">
-                <span>🌡️</span>
-                <div>
-                    <small>Air Temperature</small>
-                    <strong id="heroTemperature">-- °C</strong>
+            <!-- 4 Compact Overview Cards in One Row -->
+            <div class="overview-grid-4">
+                <div class="land-stat-tile">
+                    <span class="stat-tile-label">Total Land</span>
+                    <strong class="stat-tile-val" id="landStatTotal">1.00 Acre</strong>
+                </div>
+                <div class="land-stat-tile tile-allocated">
+                    <span class="stat-tile-label">Cultivated / Allocated</span>
+                    <strong class="stat-tile-val" id="landStatAllocated">0.80 Acre</strong>
+                </div>
+                <div class="land-stat-tile tile-available">
+                    <span class="stat-tile-label">Available / Empty Land</span>
+                    <strong class="stat-tile-val" id="landStatAvailable">0.20 Acre</strong>
+                </div>
+                <div class="land-stat-tile tile-sections">
+                    <span class="stat-tile-label">Land Sections</span>
+                    <strong class="stat-tile-val" id="landStatSections">3 Units</strong>
                 </div>
             </div>
 
-            <div class="floating-sensor sensor-humidity">
-                <span>💦</span>
-                <div>
-                    <small>Humidity</small>
-                    <strong id="heroHumidity">--%</strong>
+            <!-- Visual Proportional Progress Bar & Legend -->
+            <div class="land-allocation-progress-wrap">
+                <div class="land-progress-bar" id="landProgressBar" role="progressbar" aria-label="Land section allocation breakdown"></div>
+                <div class="land-progress-legend" id="landProgressLegend"></div>
+            </div>
+        </section>
+
+        <!-- SECTION 2: Live Weather (5 compact metric cards of consistent height) -->
+        <section id="sectionWeather" class="dashboard-section live-weather-card" aria-label="Live Weather & Atmospheric Conditions">
+            <div class="weather-top-row">
+                <div class="weather-current-group">
+                    <span class="weather-big-icon" id="weatherIcon">🌤️</span>
+                    <div>
+                        <strong style="font-size: 16px; color: #0f172a;">Live Field Weather</strong>
+                        <small class="weather-loc-tag" id="weatherLocationTag" style="display:block;">GPS Farm Coordinates</small>
+                    </div>
+                </div>
+
+                <div class="weather-meta-group">
+                    <span class="weather-source-badge" id="weatherSourceBadge">Open-Meteo API (Live)</span>
+                    <span class="weather-sync-time" id="weatherSyncTime">Updated recently</span>
+                    <button type="button" id="btnRefreshWeather" class="btn-refresh-weather" title="Sync Live Open-Meteo Weather">
+                        <span aria-hidden="true">🔄</span>
+                        <span>Sync Live</span>
+                    </button>
                 </div>
             </div>
-        </div>
-    </section>
+
+            <!-- 5 Compact Metric Cards of Consistent Height -->
+            <div class="weather-grid-5">
+                <div class="weather-metric-card">
+                    <span class="weather-card-icon">🌡️</span>
+                    <div class="weather-card-body">
+                        <small>Air Temperature</small>
+                        <strong id="weatherTempDisplay">-- °C</strong>
+                        <span class="weather-condition-text" id="weatherConditionDisplay" style="display:block; font-size:11px; color:#64748b; font-weight:500;">Live Sensor</span>
+                    </div>
+                </div>
+                <div class="weather-metric-card">
+                    <span class="weather-card-icon">💧</span>
+                    <div class="weather-card-body">
+                        <small>Relative Humidity</small>
+                        <strong id="weatherHumidityDisplay">--%</strong>
+                    </div>
+                </div>
+                <div class="weather-metric-card">
+                    <span class="weather-card-icon">🌧️</span>
+                    <div class="weather-card-body">
+                        <small>Current Rainfall</small>
+                        <strong id="weatherRainDisplay">0.0 mm</strong>
+                    </div>
+                </div>
+                <div class="weather-metric-card">
+                    <span class="weather-card-icon">⏱️</span>
+                    <div class="weather-card-body">
+                        <small>24h Rain Forecast</small>
+                        <strong id="weatherForecast24Display">0.0 mm</strong>
+                    </div>
+                </div>
+                <div class="weather-metric-card">
+                    <span class="weather-card-icon">🪴</span>
+                    <div class="weather-card-body">
+                        <small>Soil Temp (Est.)</small>
+                        <strong id="weatherSoilTempDisplay">-- °C</strong>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- SECTION 3: Land Sections (Actual sections with Add/Edit/Remove actions; no demo info) -->
+        <section id="sectionLandSections" class="dashboard-section sections-container" aria-label="Independent Land Sections">
+            <div class="farm-breadcrumb-nav" style="display:flex; align-items:center; gap:8px; font-size:13px; font-weight:600; color:#166534; margin-bottom:14px; background:rgba(34, 197, 94, 0.08); padding:8px 14px; border-radius:8px; border:1px solid rgba(34, 197, 94, 0.2);">
+                <span>🏡 Farmer Dashboard</span>
+                <span style="color:#94a3b8;">›</span>
+                <span>🌾 My Farms</span>
+                <span style="color:#94a3b8;">›</span>
+                <span style="color:#0f172a; font-weight:700;">🧩 Land Sections</span>
+            </div>
+
+            <div class="sections-header-bar">
+                <div class="sections-title-group">
+                    <span class="sections-icon">🌾</span>
+                    <div>
+                        <h3>Independent Land Sections</h3>
+                        <p>Manage all plots for this farm. Add, edit, or remove sections with independent crops and acreage.</p>
+                    </div>
+                </div>
+                <button type="button" id="btnAddSectionModalBtn" class="btn-add-section" title="Add a new section within available land">
+                    <span aria-hidden="true">➕</span>
+                    <span>Add Land Section</span>
+                </button>
+            </div>
+
+            <!-- Dynamic Section Cards Grid -->
+            <div id="sectionsCardsGrid" class="sections-cards-grid"></div>
+        </section>
+
+        <!-- SECTION 4: Irrigation Workspace (Balanced 2-column desktop layout) -->
+        <section id="sectionIrrigationWorkspace" class="dashboard-section irrigation-workspace-section" aria-label="Irrigation Prediction Workspace" style="padding: 0; background: transparent; border: none; box-shadow: none;">
 
     <!-- Main dashboard -->
     <main class="dashboard">
 
         <!-- Input panel -->
-        <section class="panel input-panel">
+        <section id="irrigation-planner" class="panel input-panel">
             <div class="panel-heading green-heading">
                 <span class="panel-heading-icon">🌱</span>
                 <div>
                     <h2 data-i18n="formTitle">Crop and Soil Details</h2>
                     <p>Enter your crop information, state, and sensor readings</p>
+                </div>
+            </div>
+
+            <!-- Active Land Section Context Banner -->
+            <div id="activeSectionBanner" class="active-section-banner">
+                <div class="active-sec-left">
+                    <span class="active-sec-pill" id="activeSecTag">ACTIVE UNIT</span>
+                    <h3 id="activeSecTitle">Section 01 — Wheat (0.50 Acre)</h3>
+                    <p id="activeSecSub">Independent irrigation calculation & schedule for this land section</p>
+                </div>
+                <div class="active-sec-right">
+                    <span class="crop-age-chip" id="activeSecAgeChip">🌱 Sown: 35 days ago (Tillering)</span>
+                    <button type="button" id="btnEditCurrentSection" class="btn-sec-quick-edit" title="Edit this section's parameters">✏️ Edit Section</button>
                 </div>
             </div>
 
@@ -148,6 +352,30 @@
                         <select id="crop_type" name="crop_type" required disabled>
                             <option value="">-- Select a state first --</option>
                         </select>
+                    </div>
+                </div>
+
+                <!-- Section Plot Area & Dynamic Sowing Date -->
+                <div class="section-params-row">
+                    <div class="field" id="sectionAreaFieldWrap">
+                        <label for="section_area_acres">
+                            Section Plot Area (Acres)
+                        </label>
+                        <div class="input-with-icon">
+                            <span aria-hidden="true">📐</span>
+                            <input type="number" id="section_area_acres" name="section_area_acres" class="form-input" step="0.01" min="0.01" value="0.50" />
+                        </div>
+                    </div>
+
+                    <input type="hidden" id="sowing_date" name="sowing_date" />
+                    <div class="field" id="cropGrowthStageFieldWrap">
+                        <label>
+                            Crop Growth Stage & Estimated Age
+                        </label>
+                        <div class="growth-stage-display-wrap" style="display: flex; align-items: center; gap: 8px; padding: 11px 14px; background: #f8fafc; border: 1.5px solid #cbd5e1; border-radius: 10px; min-height: 44px; box-sizing: border-box;">
+                            <span aria-hidden="true">🌱</span>
+                            <span id="calculatedCropAgeBadge" class="calculated-age-badge" style="background: rgba(34, 197, 94, 0.12); color: #166534; font-weight: 700; padding: 4px 10px; border-radius: 6px; font-size: 13px;">35 days (Tillering)</span>
+                        </div>
                     </div>
                 </div>
 
@@ -310,20 +538,56 @@
                     <span data-i18n="predict">Check Irrigation</span>
                     <span aria-hidden="true">➜</span>
                 </button>
+
+                <button type="button" id="btnViewHistory" class="btn-history-trigger">
+                    <span aria-hidden="true">📜</span>
+                    <span>View Prediction History</span>
+                </button>
             </form>
         </section>
 
         <!-- Prediction panel -->
-        <section class="panel result-panel">
+        <section id="results" class="panel result-panel">
             <div class="panel-heading blue-heading">
                 <span class="panel-heading-icon">📊</span>
-                <div>
+                <div style="flex: 1;">
                     <h2 data-i18n="resultTitle">Your result</h2>
                     <p>AI prediction & state-wise rule evaluation</p>
                 </div>
+                <!-- Mini Calendar Toggle Button (Upper Right) -->
+                <button type="button" id="btnMiniCalendarToggle" class="btn-mini-cal-toggle" title="Open Irrigation Calendar" aria-label="Open Irrigation Calendar" aria-expanded="false">
+                    <span aria-hidden="true">📅</span>
+                    <span class="cal-btn-label">Calendar</span>
+                    <span class="cal-badge" id="calBadgeCount" style="display: none;">0</span>
+                </button>
             </div>
 
             <div class="result-content">
+
+                <!-- Mini Calendar Floating Popup (Calendar 2 - Upper Right Icon Trigger) -->
+                <div id="miniCalendarPopup" class="mini-calendar-popup" style="display: none;" role="dialog" aria-modal="false" aria-label="Irrigation Schedule Calendar">
+                    <div class="mini-cal-header">
+                        <button type="button" id="miniCalPrevBtn" class="mini-cal-nav-btn" aria-label="Previous Month">◀</button>
+                        <span id="miniCalMonthYear" class="mini-cal-title">November 2026</span>
+                        <button type="button" id="miniCalNextBtn" class="mini-cal-nav-btn" aria-label="Next Month">▶</button>
+                        <button type="button" id="miniCalCloseBtn" class="mini-cal-close-btn" aria-label="Close Calendar">✕</button>
+                    </div>
+                    <div class="mini-cal-weekdays">
+                        <span>Sun</span><span>Mon</span><span>Tue</span><span>Wed</span><span>Thu</span><span>Fri</span><span>Sat</span>
+                    </div>
+                    <div id="miniCalDaysGrid" class="mini-cal-days-grid">
+                        <!-- Populated dynamically via JS -->
+                    </div>
+                    <div class="mini-cal-footer">
+                        <span class="cal-legend-dot dot-green" title="Completed">✓ Done</span>
+                        <span class="cal-legend-dot dot-red" title="Skipped">✕ Skip</span>
+                        <span class="cal-legend-dot dot-blue" title="Required / Upcoming">💧 Need</span>
+                        <span class="cal-legend-dot dot-today" title="Today">Today</span>
+                    </div>
+                    <div id="miniCalSelectedDetail" class="mini-cal-selected-detail" style="display: none;">
+                        <!-- Synchronized date snippet displayed on date selection -->
+                    </div>
+                </div>
 
                 <!-- Main Status Banner -->
                 <div class="prediction-banner" id="predictionBanner">
@@ -451,6 +715,197 @@
                     </div>
                 </div>
 
+                <!-- Smart Irrigation Recommendation & Scheduler Card (Conditional: shown when IRRIGATE) -->
+                <div id="smartSchedulerCard" class="smart-scheduler-card" style="display: none;">
+                    <div class="sched-card-header">
+                        <div class="sched-header-left">
+                            <span class="sched-header-icon" aria-hidden="true">💧</span>
+                            <div>
+                                <h3 class="sched-card-title">Upcoming Irrigation Schedule</h3>
+                                <p class="sched-card-sub">Follow recommended schedule. Adjust if rainfall or moisture changes.</p>
+                            </div>
+                        </div>
+                        <div class="sched-kpi-wrap">
+                            <div class="sched-kpi">
+                                <span class="sched-kpi-label">Water Requirement</span>
+                                <strong class="sched-kpi-val" id="schedWaterReqVal">-- L</strong>
+                            </div>
+                            <span class="sched-status-badge badge-required" id="schedStatusBadge">Required</span>
+                        </div>
+                    </div>
+
+                    <!-- Step 6: When would you like to start irrigation? (Section-Wise Planning Period Prompt) -->
+                    <div class="sched-plan-prompt" id="schedPlanPrompt">
+                        <div class="prompt-header">
+                            <span class="prompt-icon" aria-hidden="true">📅</span>
+                            <div>
+                                <strong class="prompt-title">When would you like to start irrigation?</strong>
+                                <p class="prompt-sub">Select your preferred start date and planning period. The AI determines and spaces actual watering dates.</p>
+                            </div>
+                        </div>
+                        <div class="prompt-inputs-row">
+                            <div class="prompt-input-group">
+                                <label for="schedStartDateInput">Start Date</label>
+                                <input type="date" id="schedStartDateInput" class="form-input" />
+                            </div>
+                            <div class="prompt-input-group">
+                                <label for="schedPeriodSelect">Planning Period</label>
+                                <select id="schedPeriodSelect" class="form-input">
+                                    <option value="3">3 Days (Quick Cycle)</option>
+                                    <option value="7" selected>7 Days (Standard Cycle)</option>
+                                    <option value="14">14 Days (Extended Cycle)</option>
+                                </select>
+                            </div>
+                            <button type="button" id="btnGenerateSectionSchedule" class="btn-generate-sched">
+                                <span aria-hidden="true">⚡</span>
+                                <span>Generate Schedule</span>
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Main Irrigation Calendar (Calendar 1 - Compact Monthly Interactive Grid) -->
+                    <div class="main-sched-calendar" id="mainSchedCalendar">
+                        <div class="main-cal-header">
+                            <div class="main-cal-nav-group">
+                                <button type="button" id="mainCalPrevBtn" class="main-cal-nav-btn" aria-label="Previous Month">◀</button>
+                                <h4 id="mainCalMonthYear" class="main-cal-title">November 2026</h4>
+                                <button type="button" id="mainCalNextBtn" class="main-cal-nav-btn" aria-label="Next Month">▶</button>
+                            </div>
+                            <div class="main-cal-legend">
+                                <span class="cal-legend-badge legend-completed"><span class="badge-dot">●</span> Completed (Green)</span>
+                                <span class="cal-legend-badge legend-skipped"><span class="badge-dot">●</span> Skipped (Red)</span>
+                                <span class="cal-legend-badge legend-upcoming"><span class="badge-dot">●</span> Required (Blue)</span>
+                                <span class="cal-legend-badge legend-none"><span class="badge-dot">●</span> No Irrigation (Grey)</span>
+                            </div>
+                        </div>
+
+                        <div class="main-cal-weekdays">
+                            <span>Sun</span><span>Mon</span><span>Tue</span><span>Wed</span><span>Thu</span><span>Fri</span><span>Sat</span>
+                        </div>
+
+                        <div id="mainCalDaysGrid" class="main-cal-days-grid">
+                            <!-- Populated dynamically via JS with color-coded date cells -->
+                        </div>
+                    </div>
+
+                    <!-- Date-Wise Irrigation Details Section -->
+                    <div class="sched-active-session" id="schedActiveSessionBox">
+                        <div class="sched-details-banner">
+                            <div class="sched-details-left">
+                                <span class="sched-calendar-glyph">📅</span>
+                                <div>
+                                    <span class="sched-details-date-title" id="schedSelectedDateTag">Selected Date: November 15, 2026</span>
+                                    <small id="schedRelativeTimeLabel" class="sched-rel-time">Upcoming session</small>
+                                </div>
+                            </div>
+                            <span id="schedSessionStatus" class="sched-status-chip status-upcoming">Required</span>
+                        </div>
+
+                        <div class="sched-session-kpi-row">
+                            <div class="sched-session-kpi">
+                                <span class="sched-icon-small">🌾</span>
+                                <div>
+                                    <span class="sched-subtext">Crop</span>
+                                    <strong id="schedSessionCrop" class="sched-maintext">Wheat</strong>
+                                </div>
+                            </div>
+                            <div class="sched-session-kpi">
+                                <span class="sched-icon-small">⏰</span>
+                                <div>
+                                    <span class="sched-subtext">Optimal Time</span>
+                                    <strong id="schedSessionTime" class="sched-maintext">6:00 AM</strong>
+                                </div>
+                            </div>
+                            <div class="sched-session-kpi">
+                                <span class="sched-icon-small">🚰</span>
+                                <div>
+                                    <span class="sched-subtext">Water Quantity</span>
+                                    <strong id="schedSessionWater" class="sched-maintext">450 L</strong>
+                                </div>
+                            </div>
+                            <div class="sched-session-kpi">
+                                <span class="sched-icon-small">⏱️</span>
+                                <div>
+                                    <span class="sched-subtext">Duration</span>
+                                    <strong id="schedSessionDuration" class="sched-maintext">45 mins</strong>
+                                </div>
+                            </div>
+                            <div class="sched-session-kpi" id="schedWeatherKpi">
+                                <span class="sched-icon-small">⛅</span>
+                                <div>
+                                    <span class="sched-subtext">Weather / Rain</span>
+                                    <strong id="schedSessionWeather" class="sched-maintext">Clear (0.0 mm)</strong>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="sched-reason-box">
+                            <span class="sched-reason-icon">💡</span>
+                            <div>
+                                <strong style="font-size: 11px; color: #1e40af; display: block; margin-bottom: 2px;">Reason & Agronomic Advisory:</strong>
+                                <span id="schedSessionReason" class="sched-reason-text">Based on state agro-climatic rules and current soil moisture.</span>
+                            </div>
+                        </div>
+
+                        <!-- Action Buttons -->
+                        <div class="sched-actions-row">
+                            <button type="button" id="btnMarkCompleted" class="btn-sched-action btn-completed" title="Confirm that this irrigation session was completed">
+                                <span aria-hidden="true">✓</span>
+                                <span>Mark Completed</span>
+                            </button>
+                            <button type="button" id="btnSkipSession" class="btn-sched-action btn-skip" title="Skip this irrigation session and let AI reassess">
+                                <span aria-hidden="true">✕</span>
+                                <span>Skip Irrigation</span>
+                            </button>
+                            <button type="button" id="btnWhySchedule" class="btn-sched-action btn-why" title="Explain why this schedule was recommended">
+                                <span aria-hidden="true">ℹ️</span>
+                                <span>Why this schedule?</span>
+                            </button>
+                        </div>
+
+                        <!-- Collapsible Rationale Box -->
+                        <div id="schedWhyExplanation" class="sched-why-explanation" style="display: none;">
+                            <strong>Agronomic & AI Schedule Rationale</strong>
+                            <p id="schedWhyText">
+                                Sessions are spaced by crop-specific intervals (e.g., Rice AWD 2-day drying, Wheat 3-4 day cycle). 
+                                6:00 AM is recommended to prevent excessive evaporation. Any forecast rainfall ≥ 5mm automatically postpones upcoming dates.
+                            </p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- No Irrigation Required Banner (Conditional: shown when NOT IRRIGATE) -->
+                <div id="noIrrigationCard" class="no-irrigation-card" style="display: none;">
+                    <div class="no-irr-icon">🌱</div>
+                    <div class="no-irr-content">
+                        <h4>No Irrigation Required</h4>
+                        <p class="no-irr-primary">Current soil conditions are sufficient. Your next irrigation recommendation will be generated when conditions change.</p>
+                        <p id="noIrrigationReason" class="no-irr-reason">Soil moisture is within the optimal zone.</p>
+                    </div>
+                </div>
+
+                <!-- Empty Land / Uncultivated Section Notice (Conditional: shown when is_empty=1) -->
+                <div id="emptyLandCard" class="empty-land-card" style="display: none;">
+                    <div class="empty-land-icon">🌱</div>
+                    <div class="empty-land-content">
+                        <div class="empty-land-header">
+                            <h4>Empty Land / Uncultivated Section</h4>
+                            <span class="empty-land-badge">No Crop Assigned</span>
+                        </div>
+                        <p class="empty-land-primary">
+                            This section (<strong id="emptyLandSectionName">Section 03</strong> — <strong id="emptyLandAreaDisplay">0.20 Acre</strong>) is uncultivated. 
+                            No crop is planted, so no irrigation is needed and no schedule is generated.
+                        </p>
+                        <p class="empty-land-sub">
+                            Empty land remains preserved as unallocated/available farm reserve until a crop is assigned.
+                        </p>
+                        <button type="button" id="btnCultivateEmptySection" class="btn-cultivate-action">
+                            <span aria-hidden="true">🌱</span>
+                            <span>Assign Crop & Cultivate Section</span>
+                        </button>
+                    </div>
+                </div>
+
                 <!-- Existing JavaScript writes API results here -->
                 <div id="result" class="api-result" aria-live="polite">
                     Your prediction will appear here.
@@ -458,6 +913,10 @@
             </div>
         </section>
     </main>
+    </section>
+    <!-- End Section 4: Irrigation Workspace -->
+    </div>
+    <!-- End of #landManagementModule Dashboard Main Container -->
 
     <footer class="dashboard-footer">
         <div>
@@ -474,11 +933,12 @@
         </div>
     </footer>
 
-    <!-- AgriSaathi Floating Chatbot Widget -->
+    <!-- AgriSaathi Original Multilingual AI Agricultural Chatbot Widget (Dashboard Only) -->
     <div id="agriChatWidget" class="agri-chat-widget">
         <!-- Floating Trigger Button -->
-        <button id="agriChatToggle" class="agri-chat-toggle" aria-label="Open AgriSaathi AI Agricultural Chatbot" aria-expanded="false" aria-controls="agriChatWindow">
+        <button id="agriChatToggle" class="agri-chat-toggle" aria-label="Open AgriSaathi AI Agricultural Chatbot" aria-expanded="false" aria-controls="agriChatWindow" title="Open AgriSaathi AI Agricultural Chatbot">
             <span class="agri-toggle-icon" aria-hidden="true">🌱</span>
+            <span class="agri-toggle-bot-icon" style="display:none;" aria-hidden="true">🤖</span>
             <span class="agri-toggle-close-icon" aria-hidden="true">✕</span>
             <span class="agri-toggle-badge" title="AgriSaathi Online"></span>
         </button>
@@ -503,6 +963,25 @@
                         <option value="hi">हिन्दी</option>
                         <option value="pa">ਪੰਜਾਬੀ</option>
                         <option value="te">తెలుగు</option>
+                        <option value="ta">தமிழ்</option>
+                        <option value="bn">বাংলা</option>
+                        <option value="mr">मराठी</option>
+                        <option value="gu">ગુજરાતી</option>
+                        <option value="kn">ಕನ್ನಡ</option>
+                        <option value="ml">മലയാളം</option>
+                        <option value="or">ଓଡ଼ିଆ</option>
+                        <option value="as">অসমীয়া</option>
+                        <option value="ur">اردو</option>
+                        <option value="sa">संस्कृतम्</option>
+                        <option value="ne">नेपाली</option>
+                        <option value="kok">कोंकणी</option>
+                        <option value="mai">मैथिली</option>
+                        <option value="doi">डोगरी</option>
+                        <option value="brx">बड़ो</option>
+                        <option value="ks">کٲشُر</option>
+                        <option value="sd">سنڌي</option>
+                        <option value="mni">মৈতৈলোন্</option>
+                        <option value="sat">ᱥᱟᱱᱛᱟᱲᱤ</option>
                     </select>
 
                     <!-- New Chat Button -->
@@ -565,7 +1044,7 @@
                     <div class="agri-msg-avatar" aria-hidden="true">🌱</div>
                     <div class="agri-msg-bubble">
                         <div class="agri-msg-text" id="agriWelcomeText">
-                            Hello! I am <strong>AgriSaathi</strong>, your smart farming companion. How can I help you with your irrigation, soil health, or crops today?
+                            Hello! I am <strong>AgriSaathi</strong>, your smart farming companion. How can I help you with your irrigation, soil health, crops, or website control today?
                         </div>
                         <span class="agri-msg-time">Just now</span>
                     </div>
@@ -599,17 +1078,33 @@
                     <span class="agri-typing-dot"></span>
                     <span class="agri-typing-dot"></span>
                 </div>
-                <span class="agri-typing-label" id="agriTypingLabel">AgriSaathi is typing...</span>
+                <span class="agri-typing-label" id="agriTypingLabel">AgriSaathi is thinking...</span>
+            </div>
+
+            <!-- Voice Recognition Listening Status Banner -->
+            <div id="agriVoiceStatus" class="agri-voice-status" style="display: none;" aria-live="polite">
+                <span class="agri-voice-pulse"></span>
+                <span id="agriVoiceStatusText" class="agri-voice-text">Listening... Speak now</span>
+                <button type="button" id="agriVoiceStopBtn" class="agri-voice-stop-btn" aria-label="Stop listening" title="Stop listening">✕</button>
             </div>
 
             <!-- Footer / Input Form -->
             <form id="agriChatForm" class="agri-chat-footer" autocomplete="off">
+                <button
+                    type="button"
+                    id="agriMicBtn"
+                    class="agri-mic-btn"
+                    aria-label="Start voice input"
+                    title="Speak to AgriSaathi (Click once to record, click again to stop and send)"
+                >
+                    <span aria-hidden="true" class="agri-mic-icon">🎙️</span>
+                </button>
                 <input
                     type="text"
                     id="agriChatInput"
                     class="agri-chat-input"
-                    placeholder="Ask AgriSaathi about crops or irrigation..."
-                    aria-label="Type your message to AgriSaathi"
+                    placeholder="Ask or speak to AgriSaathi..."
+                    aria-label="Type your message or use voice input"
                     maxlength="500"
                 />
                 <button type="submit" id="agriSendBtn" class="agri-send-btn" aria-label="Send message">
@@ -619,6 +1114,451 @@
         </div>
     </div>
 
+    <!-- Prediction History Modal -->
+    <div id="predictionHistoryModal" class="history-modal" style="display: none;" aria-hidden="true" role="dialog" aria-modal="true" aria-labelledby="historyModalTitle">
+        <div class="history-modal-backdrop" id="historyModalBackdrop"></div>
+        <div class="history-modal-dialog">
+            <div class="history-modal-header">
+                <div class="history-modal-title-wrap">
+                    <span class="history-modal-icon" aria-hidden="true">📊</span>
+                    <h3 id="historyModalTitle">Prediction History</h3>
+                </div>
+                <button type="button" id="historyModalCloseBtn" class="history-modal-close-btn" aria-label="Close history modal">✕</button>
+            </div>
+            <div class="history-modal-body">
+                <div id="predictionHistoryContent" class="prediction-history-content">
+                    <!-- Populated dynamically via JavaScript -->
+                </div>
+            </div>
+            <div class="history-modal-footer">
+                <button type="button" id="clearPredictionHistoryBtn" class="btn-clear-history">🗑️ Clear History</button>
+                <button type="button" id="closePredictionHistoryBtn" class="btn-close-modal">Close</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Farmer Authentication & Registration Modal -->
+    <div id="authModal" class="custom-modal" style="display: none;" role="dialog" aria-modal="true" aria-labelledby="authModalTitle">
+        <div class="modal-backdrop" id="authModalBackdrop"></div>
+        <div class="modal-dialog auth-dialog">
+            <div class="modal-header">
+                <div class="modal-title-group">
+                    <span class="modal-icon" aria-hidden="true">👨‍🌾</span>
+                    <h3 id="authModalTitle">Farmer Account Access</h3>
+                </div>
+                <button type="button" class="modal-close-btn" id="authModalCloseBtn" aria-label="Close modal">✕</button>
+            </div>
+
+            <div class="auth-tabs-nav">
+                <button type="button" id="tabAuthLoginBtn" class="auth-tab-btn active">Farmer Login</button>
+                <button type="button" id="tabAuthRegisterBtn" class="auth-tab-btn">Create New Account</button>
+            </div>
+
+            <div class="modal-body">
+                <!-- Login Tab Content (Passwordless First) -->
+                <div id="tabContentLogin" class="auth-form-tab active">
+                    <!-- Prominent 1-Touch Passkey Login Button (Hero) -->
+                    <div class="passkey-login-hero">
+                        <button type="button" id="btnPasskeyLogin" class="btn-passkey-primary" title="Login using Face ID, Android Biometrics, Fingerprint, or Device PIN">
+                            <span class="biometric-icon" aria-hidden="true">👆</span>
+                            <div class="btn-text-wrap">
+                                <strong>Login with Face / Fingerprint</strong>
+                                <small>1-touch passwordless login using phone or PC sensor</small>
+                            </div>
+                            <span class="btn-arrow" aria-hidden="true">➜</span>
+                        </button>
+                    </div>
+
+                    <div class="auth-divider">
+                        <span>OR LOGIN WITH MOBILE OTP</span>
+                    </div>
+
+                    <!-- Mobile OTP Login Form -->
+                    <form id="formFarmerOtpLogin">
+                        <div class="form-group">
+                            <label for="loginOtpPhone">Registered Mobile Number</label>
+                            <div class="otp-send-wrap">
+                                <input type="tel" id="loginOtpPhone" class="form-input" placeholder="10-digit mobile number" maxlength="10" />
+                                <button type="button" id="btnSendLoginOtp" class="btn-send-otp">
+                                    <span>Send OTP</span>
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- OTP Verification Box -->
+                        <div id="loginOtpVerifyBox" class="otp-verify-box" style="display: none;">
+                            <div class="otp-sent-status">
+                                <span id="loginOtpSentMsg">OTP code sent to mobile</span>
+                                <button type="button" id="btnResendLoginOtp" class="btn-resend-link">Resend Code</button>
+                            </div>
+                            <div class="form-group" style="margin-bottom: 8px;">
+                                <label for="loginOtpCode">Enter 6-Digit OTP</label>
+                                <input type="text" id="loginOtpCode" class="form-input otp-digit-input" placeholder="••••••" maxlength="6" inputmode="numeric" />
+                            </div>
+                            <button type="button" id="btnSubmitOtpLogin" class="btn-primary-action" style="width: 100%;">
+                                <span>Verify &amp; Login</span>
+                                <span aria-hidden="true">➜</span>
+                            </button>
+                        </div>
+                    </form>
+
+                    <!-- Toggle Discrete Password Login for Backwards Compatibility -->
+                    <div style="margin-top: 14px; text-align: center;">
+                        <button type="button" id="btnTogglePasswordLogin" class="link-discrete">Use password login instead</button>
+                    </div>
+
+                    <form id="formFarmerLogin" style="display: none; margin-top: 12px; padding-top: 12px; border-top: 1px dashed #cbd5e1;">
+                        <div class="form-group">
+                            <label for="loginIdentifier">Mobile Number or Email</label>
+                            <input type="text" id="loginIdentifier" class="form-input" placeholder="e.g. 9876543210 or ramesh@krishi.in" />
+                        </div>
+                        <div class="form-group">
+                            <label for="loginPassword">Password</label>
+                            <input type="password" id="loginPassword" class="form-input" placeholder="••••••••" />
+                        </div>
+                        <button type="submit" class="btn-primary-action" id="btnSubmitLogin">
+                            <span>Login with Password</span>
+                            <span aria-hidden="true">➜</span>
+                        </button>
+                    </form>
+
+                    <div id="loginFeedback" class="form-feedback" style="display: none; margin-top: 12px;"></div>
+                </div>
+
+                <!-- Registration Tab Content (Verified Mobile OTP) -->
+                <form id="formFarmerRegister" class="auth-form-tab" style="display: none;">
+                    <div class="form-group">
+                        <label for="regName">Farmer Full Name *</label>
+                        <input type="text" id="regName" class="form-input" placeholder="e.g. Ramesh Kumar" required />
+                    </div>
+
+                    <div class="form-group">
+                        <label for="regPhone">Mobile Number (Verified via SMS OTP) *</label>
+                        <div class="otp-send-wrap">
+                            <input type="tel" id="regPhone" class="form-input" placeholder="10-digit mobile" maxlength="10" required />
+                            <button type="button" id="btnSendRegOtp" class="btn-send-otp">
+                                <span>Send OTP</span>
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Registration OTP Verification Box -->
+                    <div id="regOtpVerifyBox" class="otp-verify-box" style="display: none;">
+                        <div class="otp-sent-status">
+                            <span id="regOtpSentMsg">OTP code sent to mobile</span>
+                            <button type="button" id="btnResendRegOtp" class="btn-resend-link">Resend Code</button>
+                        </div>
+                        <div class="form-group" style="margin-bottom: 0;">
+                            <label for="regOtpCode">Enter 6-Digit OTP *</label>
+                            <input type="text" id="regOtpCode" class="form-input otp-digit-input" placeholder="••••••" maxlength="6" inputmode="numeric" />
+                        </div>
+                    </div>
+
+                    <!-- GPS Location Auto-Detection Section -->
+                    <div class="location-detect-box" style="margin-top: 14px;">
+                        <div class="loc-detect-header">
+                            <div>
+                                <strong>📍 Farm Location Detection</strong>
+                                <small>GPS coordinates ensure accurate local Open-Meteo weather forecasts</small>
+                            </div>
+                            <button type="button" id="btnAutoDetectGPS" class="btn-detect-gps">
+                                <span aria-hidden="true">🎯</span>
+                                <span>Detect via GPS</span>
+                            </button>
+                        </div>
+                        <div class="form-row-3">
+                            <div class="form-group">
+                                <label for="regState">State *</label>
+                                <input type="text" id="regState" class="form-input" value="Punjab" required />
+                            </div>
+                            <div class="form-group">
+                                <label for="regDistrict">District</label>
+                                <input type="text" id="regDistrict" class="form-input" placeholder="e.g. Ludhiana" />
+                            </div>
+                            <div class="form-group">
+                                <label for="regVillage">Village</label>
+                                <input type="text" id="regVillage" class="form-input" placeholder="e.g. Sahnewal" />
+                            </div>
+                        </div>
+                        <div class="coords-display-row">
+                            <span id="detectedCoordsText">Coordinates: 30.9010° N, 75.8573° E</span>
+                            <input type="hidden" id="regLat" value="30.9010" />
+                            <input type="hidden" id="regLon" value="75.8573" />
+                        </div>
+                    </div>
+
+                    <!-- Total Land Registration & Unit Conversion -->
+                    <div class="land-reg-box">
+                        <div class="form-row-2">
+                            <div class="form-group">
+                                <label for="regTotalLand">Total Agricultural Land Owned *</label>
+                                <input type="number" id="regTotalLand" class="form-input" step="0.01" min="0.05" value="1.00" required />
+                            </div>
+                            <div class="form-group">
+                                <label for="regLandUnit">Land Measurement Unit</label>
+                                <select id="regLandUnit" class="form-input">
+                                    <option value="Acres" selected>Acres</option>
+                                    <option value="Hectares">Hectares (1 ha = 2.471 ac)</option>
+                                    <option value="Bigha">Bigha (Standard = 0.62 ac)</option>
+                                    <option value="Guntha">Guntha (1 ac = 40 guntha)</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="canonical-area-hint" id="canonicalAreaHint">
+                            Canonical Area: <strong>1.00 Acre</strong> (used internally for water scaling)
+                        </div>
+                    </div>
+
+                    <div id="registerFeedback" class="form-feedback" style="display: none;"></div>
+                    <button type="submit" class="btn-primary-action" id="btnSubmitRegister">
+                        <span>Verify OTP &amp; Create Account</span>
+                        <span aria-hidden="true">➜</span>
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Add / Edit Farm Land Section Modal (Asks ONLY for Section Name, Plot Area, Crop Type) -->
+    <div id="sectionModal" class="custom-modal" style="display: none;" role="dialog" aria-modal="true" aria-labelledby="sectionModalTitle">
+        <div class="modal-backdrop" id="sectionModalBackdrop"></div>
+        <div class="modal-dialog section-dialog" style="max-width: 480px;">
+            <div class="modal-header">
+                <div class="modal-title-group">
+                    <span class="modal-icon" aria-hidden="true">🌾</span>
+                    <h3 id="sectionModalTitle">Add Land Section</h3>
+                </div>
+                <button type="button" class="modal-close-btn" id="sectionModalCloseBtn" aria-label="Close modal">✕</button>
+            </div>
+            <form id="formSectionManage" class="modal-body" style="padding: 22px;">
+                <input type="hidden" id="modalSectionId" value="" />
+                
+                <div class="form-group" style="margin-bottom: 16px;">
+                    <label for="modalSectionName" style="font-weight: 600; display: block; margin-bottom: 6px; font-size: 13px;">1. Section Name *</label>
+                    <input type="text" id="modalSectionName" class="form-input" placeholder="e.g. Section 1, North Field, Plot A" required style="width: 100%; padding: 10px 12px; border-radius: 8px; border: 1.5px solid #cbd5e1;" />
+                </div>
+
+                <div class="form-group" style="margin-bottom: 16px;">
+                    <label for="modalSectionArea" style="font-weight: 600; display: block; margin-bottom: 6px; font-size: 13px;">2. Plot Area (Acres) *</label>
+                    <input type="number" id="modalSectionArea" class="form-input" step="0.01" min="0.01" placeholder="e.g. 0.50" required style="width: 100%; padding: 10px 12px; border-radius: 8px; border: 1.5px solid #cbd5e1;" />
+                    <small id="modalAreaLimitHint" class="form-hint" style="color: #64748b; font-size: 12px; margin-top: 4px; display: block;">Available for allocation: 0.20 Acre</small>
+                </div>
+
+                <div class="form-group" style="margin-bottom: 20px;">
+                    <label for="modalCropSelect" style="font-weight: 600; display: block; margin-bottom: 6px; font-size: 13px;">3. Crop Type *</label>
+                    <select id="modalCropSelect" class="form-input" required style="width: 100%; padding: 10px 12px; border-radius: 8px; border: 1.5px solid #cbd5e1; background: #fff;">
+                        <option value="Wheat">Wheat</option>
+                        <option value="Rice">Rice (Paddy)</option>
+                        <option value="Potato">Potato</option>
+                        <option value="Maize">Maize</option>
+                        <option value="Cotton">Cotton</option>
+                        <option value="Mustard">Mustard</option>
+                        <option value="Sugarcane">Sugarcane</option>
+                        <option value="Tomato">Tomato</option>
+                        <option value="Soybean">Soybean</option>
+                        <option value="Groundnut">Groundnut</option>
+                        <option value="Empty">Empty / Uncultivated Land</option>
+                    </select>
+                    <small style="color: #64748b; font-size: 11px; margin-top: 4px; display: block;">Empty sections bypass irrigation predictions automatically.</small>
+                </div>
+
+                <div id="sectionModalFeedback" class="form-feedback" style="display: none; padding: 10px; border-radius: 8px; font-size: 13px; margin-bottom: 14px;"></div>
+
+                <div class="modal-footer" style="display: flex; justify-content: space-between; align-items: center; border-top: 1px solid #e2e8f0; padding-top: 16px;">
+                    <button type="button" id="btnDeleteSectionAction" class="btn-danger-outline" style="display: none; color: #dc2626; border: 1px solid #fca5a5; background: #fef2f2; padding: 8px 16px; border-radius: 8px; font-weight: 600; cursor: pointer;">Delete Section</button>
+                    <button type="submit" class="btn-primary-action" id="btnSaveSectionSubmit" style="background: #16a34a; color: #ffffff; border: none; padding: 10px 22px; border-radius: 8px; font-weight: 700; cursor: pointer; margin-left: auto;">Save Section</button>
+                </div>
+            </form>
+        </div>
+    </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Combined Global Farmer Irrigation Calendar Modal -->
+    <div id="globalCalendarModal" class="custom-modal" style="display: none;" role="dialog" aria-modal="true" aria-labelledby="globalCalModalTitle">
+        <div class="modal-backdrop" id="globalCalendarBackdrop"></div>
+        <div class="modal-dialog global-cal-dialog">
+            <div class="modal-header">
+                <div class="modal-title-group">
+                    <span class="modal-icon" aria-hidden="true">📅</span>
+                    <div>
+                        <h3 id="globalCalModalTitle">Combined Farm Irrigation Calendar</h3>
+                        <p class="modal-subtext">Aggregates scheduled irrigation across all your land sections without altering individual section records.</p>
+                    </div>
+                </div>
+                <button type="button" class="modal-close-btn" id="globalCalendarCloseBtn" aria-label="Close modal">✕</button>
+            </div>
+
+            <div class="modal-body global-cal-body">
+                <!-- Month & Year Navigation Bar -->
+                <div class="global-cal-top-bar">
+                    <div class="cal-nav-buttons">
+                        <button type="button" id="globalCalPrevBtn" class="main-cal-nav-btn" aria-label="Previous Month">◀</button>
+                        <h4 id="globalCalMonthYear" class="global-cal-month-title">November 2026</h4>
+                        <button type="button" id="globalCalNextBtn" class="main-cal-nav-btn" aria-label="Next Month">▶</button>
+                    </div>
+                    <div class="global-cal-legend">
+                        <span class="cal-legend-badge legend-upcoming"><span class="badge-dot">●</span> Scheduled / Upcoming (Blue)</span>
+                        <span class="cal-legend-badge legend-completed"><span class="badge-dot">●</span> Completed (Green)</span>
+                        <span class="cal-legend-badge legend-skipped"><span class="badge-dot">●</span> Skipped (Red)</span>
+                    </div>
+                </div>
+
+                <!-- Monthly Grid -->
+                <div class="global-cal-weekdays">
+                    <span>Sun</span><span>Mon</span><span>Tue</span><span>Wed</span><span>Thu</span><span>Fri</span><span>Sat</span>
+                </div>
+                <div id="globalCalDaysGrid" class="global-cal-grid">
+                    <!-- Populated dynamically via JavaScript -->
+                </div>
+
+                <!-- Selected Date Breakdown Box -->
+                <div class="global-date-breakdown-card" id="globalDateBreakdownCard">
+                    <div class="breakdown-header">
+                        <div class="breakdown-title-wrap">
+                            <span class="breakdown-icon">💧</span>
+                            <div>
+                                <h4 id="breakdownDateTitle">Farmer's Daily Irrigation — November 16, 2026</h4>
+                                <span id="breakdownSectionsCount" class="breakdown-count-tag">2 Sections Require Irrigation</span>
+                            </div>
+                        </div>
+                        <div class="breakdown-total-kpi">
+                            <small>Total Daily Water</small>
+                            <strong id="breakdownTotalWater">750 L</strong>
+                        </div>
+                    </div>
+
+                    <!-- Individual Sections List for Selected Date -->
+                    <div id="breakdownSectionsList" class="breakdown-sections-list">
+                        <!-- e.g. Section 01 (Wheat 500L), Section 02 (Potato 250L) -->
+                    </div>
+
+                    <div class="breakdown-advisory-note">
+                        <span>ℹ️</span>
+                        <small>The combined calendar is an aggregated overview. Each section's schedule and history remain completely independent.</small>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" id="closeGlobalCalendarBtn" class="btn-close-modal">Close Calendar</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- WebAuthn Biometric Passkey Enrollment Modal -->
+    <div id="passkeyEnrollModal" class="custom-modal" style="display: none;" role="dialog" aria-modal="true" aria-labelledby="passkeyEnrollTitle">
+        <div class="modal-backdrop" id="passkeyEnrollBackdrop"></div>
+        <div class="modal-dialog" style="max-width: 480px;">
+            <div class="modal-header">
+                <div class="modal-title-group">
+                    <span class="modal-icon" aria-hidden="true">🌾</span>
+                    <h3 id="passkeyEnrollTitle">Enable 1-Touch Biometric Login</h3>
+                </div>
+                <button type="button" class="modal-close-btn" id="passkeyEnrollCloseBtn" aria-label="Close modal">✕</button>
+            </div>
+            <div class="modal-body text-center">
+                <div class="biometric-graphic">
+                    <span class="big-biometric-icon" aria-hidden="true">👆</span>
+                    <span class="face-biometric-icon" aria-hidden="true">👤</span>
+                </div>
+                <h4 style="margin: 12px 0 6px 0; color: #0f172a;">Log in faster next time!</h4>
+                <p style="font-size: 14px; color: #475569; line-height: 1.5;">
+                    Enable <strong>Face ID</strong>, <strong>Fingerprint</strong>, or device PIN on this device. You will never need to wait for SMS OTP codes or type passwords again.
+                </p>
+                <div class="security-callout">
+                    <small>🔒 <strong>100% Private &amp; Secure:</strong> Biometric data never leaves your device. Only your phone or computer can verify your fingerprint or face.</small>
+                </div>
+                <div id="passkeyEnrollFeedback" class="form-feedback" style="display: none; margin-top: 12px;"></div>
+            </div>
+            <div class="modal-footer" style="flex-direction: column; gap: 8px;">
+                <button type="button" id="btnConfirmEnrollPasskey" class="btn-primary-action" style="width: 100%;">
+                    <span>🔐 Enable Face / Fingerprint Login</span>
+                </button>
+                <button type="button" id="btnSkipEnrollPasskey" class="btn-close-modal" style="background: transparent; border: none; color: #64748b; font-weight: 500;">
+                    Skip for Now
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Face Lock & Device Security Management Modal -->
+    <div id="deviceManageModal" class="custom-modal" style="display: none;" role="dialog" aria-modal="true" aria-labelledby="deviceManageTitle">
+        <div class="modal-backdrop" id="deviceManageBackdrop"></div>
+        <div class="modal-dialog" style="max-width: 540px;">
+            <div class="modal-header">
+                <div class="modal-title-group">
+                    <span class="modal-icon" aria-hidden="true">👤</span>
+                    <div>
+                        <h3 id="deviceManageTitle">Face Lock &amp; Device Security</h3>
+                        <p class="modal-subtext">Manage Face Lock passkeys and authorized devices for your farm.</p>
+                    </div>
+                </div>
+                <button type="button" class="modal-close-btn" id="deviceManageCloseBtn" aria-label="Close modal">✕</button>
+            </div>
+            <div class="modal-body">
+                <!-- Status & Action Toolbar -->
+                <div class="facelock-status-card" style="background:#f8fafc; border:1px solid #e2e8f0; border-radius:12px; padding:14px 16px; margin-bottom:16px;">
+                    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
+                        <div>
+                            <span style="font-size:12px; font-weight:700; color:#64748b; text-transform:uppercase;">Face Lock Status:</span>
+                            <span id="faceLockStatusText" style="margin-left:6px; font-weight:700; font-size:13.5px; color:#166534;">Checking...</span>
+                        </div>
+                    </div>
+                    <div style="display:flex; gap:8px; flex-wrap:wrap; margin-top:8px;">
+                        <button type="button" id="btnEnableFaceLockSetting" class="btn-primary-action" style="padding:7px 14px; font-size:12.5px; display:inline-flex; align-items:center; gap:6px;">
+                            <span>🔐 Enable Face Lock</span>
+                        </button>
+                        <button type="button" id="btnRegisterAnotherDeviceSetting" class="btn-primary-action" style="padding:7px 14px; font-size:12.5px; display:none; align-items:center; gap:6px;">
+                            <span>+ Register Another Device</span>
+                        </button>
+                        <button type="button" id="btnDisableFaceLockSetting" style="padding:7px 14px; font-size:12.5px; background:rgba(220, 38, 38, 0.08); color:#dc2626; border:1px solid rgba(220, 38, 38, 0.25); border-radius:8px; font-weight:700; cursor:pointer; display:none;">
+                            <span>Disable Face Lock</span>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Password Confirmation Form (Revealed when revoking or disabling) -->
+                <div id="passwordConfirmBox" style="display:none; background:#fff7ed; border:1px solid #fdba74; border-radius:12px; padding:14px 16px; margin-bottom:16px;">
+                    <div style="display:flex; align-items:center; gap:8px; margin-bottom:6px;">
+                        <span style="font-size:16px;">🔒</span>
+                        <strong style="font-size:13px; color:#9a3412;" id="passwordConfirmTitle">Password Confirmation Required</strong>
+                    </div>
+                    <p style="font-size:12px; color:#7c2d12; margin-bottom:10px;" id="passwordConfirmDesc">
+                        Please enter your account password to confirm this security change.
+                    </p>
+                    <div style="display:flex; gap:8px;">
+                        <input type="password" id="inputConfirmPassword" class="form-input" placeholder="Enter account password" style="flex:1; padding:8px 12px; font-size:13px; border:1px solid #cbd5e1; border-radius:8px;">
+                        <button type="button" id="btnExecuteConfirmedAction" style="background:#dc2626; color:#fff; border:none; padding:8px 14px; border-radius:8px; font-size:13px; font-weight:700; cursor:pointer;">
+                            Confirm
+                        </button>
+                        <button type="button" id="btnCancelConfirmedAction" style="background:#e2e8f0; color:#334155; border:none; padding:8px 12px; border-radius:8px; font-size:13px; font-weight:600; cursor:pointer;">
+                            Cancel
+                        </button>
+                    </div>
+                    <div id="passwordConfirmError" style="display:none; margin-top:6px; font-size:12px; color:#dc2626; font-weight:600;"></div>
+                </div>
+
+                <!-- Registered Devices List -->
+                <div>
+                    <span style="font-size:12.5px; font-weight:700; color:#334155; display:block; margin-bottom:8px;">
+                        Registered Devices (<span id="devicesCountText">0</span>)
+                    </span>
+                    <div id="devicesListContainer" class="device-list-container">
+                        <!-- Populated dynamically via JS -->
+                    </div>
+                </div>
+
+                <div id="deviceManageFeedback" class="form-feedback" style="display: none; margin-top: 12px;"></div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" id="deviceManageDoneBtn" class="btn-close-modal">Done</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="{{ url_for('static', filename='i18n.js') }}"></script>
+    <script src="{{ url_for('static', filename='voice_controller.js') }}"></script>
     <script src="{{ url_for('static', filename='app.js') }}"></script>
     <script src="{{ url_for('static', filename='chat.js') }}"></script>
 </body>

@@ -1,0 +1,754 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="theme-color" content="#0f172a">
+    <title>Super Admin Dashboard | AgroSmart Central Management</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='admin.css') }}">
+</head>
+<body class="admin-dashboard-body">
+
+    <!-- Top Admin Bar -->
+    <header class="admin-topbar">
+        <div class="admin-topbar-left">
+            <span class="admin-shield-icon" aria-hidden="true">🛡️</span>
+            <div>
+                <strong class="admin-portal-title">AgroSmart Central Authority</strong>
+                <small class="admin-portal-sub">Private Super Admin Portal · System Owner Dashboard</small>
+            </div>
+        </div>
+
+        <div class="admin-topbar-right">
+            <!-- Global Top Controls (Language, Speaker, Voice) -->
+            <div class="global-top-controls" id="globalTopControls">
+                <!-- Left side: Language selector -->
+                <div class="lang-selector-compact">
+                    <span class="globe-icon" aria-hidden="true">🌐</span>
+                    <select id="languageSelect" class="lang-selector" aria-label="Select Application Language">
+                        <option value="en">English (English)</option>
+                        <option value="hi">हिन्दी (Hindi)</option>
+                        <option value="te">తెలుగు (Telugu)</option>
+                        <option value="pa">ਪੰਜਾਬੀ (Punjabi)</option>
+                        <option value="ta">தமிழ் (Tamil)</option>
+                        <option value="bn">বাংলা (Bengali)</option>
+                        <option value="mr">मराठी (Marathi)</option>
+                        <option value="gu">ગુજરાતી (Gujarati)</option>
+                        <option value="kn">ಕನ್ನಡ (Kannada)</option>
+                        <option value="ml">മലയാളം (Malayalam)</option>
+                        <option value="or">ଓଡ଼ିଆ (Odia)</option>
+                        <option value="as">অসমীয়া (Assamese)</option>
+                        <option value="ur">اردو (Urdu)</option>
+                        <option value="sa">संस्कृतम् (Sanskrit)</option>
+                        <option value="ne">नेपाली (Nepali)</option>
+                        <option value="kok">कोंकणी (Konkani)</option>
+                        <option value="mai">मैथिली (Maithili)</option>
+                        <option value="doi">डोगरी (Dogri)</option>
+                        <option value="brx">बड़ो (Bodo)</option>
+                        <option value="ks">کٲشُر (Kashmiri)</option>
+                        <option value="sd">سنڌي (Sindhi)</option>
+                        <option value="mni">মৈতৈলোন্ (Manipuri)</option>
+                        <option value="sat">ᱥᱟᱱᱛᱟᱲᱤ (Santali)</option>
+                    </select>
+                </div>
+
+                <!-- Right side: Three separate icon-only buttons, aligned horizontally -->
+                <div class="header-controls-right" id="headerControlsRight">
+                    <!-- 1. Speaker icon – Text-to-Speech ON/OFF -->
+                    <button type="button" id="btnAudioListen" class="header-icon-btn btn-top-control btn-circular-audio btn-speaker-read" aria-label="Speaker ON / OFF" title="Speaker ON - Click to read page content">
+                        <span aria-hidden="true" class="speaker-icon">🔈</span>
+                    </button>
+
+                    <!-- 2. Pause icon – Pause/Resume speech -->
+                    <button type="button" id="btnAudioPause" class="header-icon-btn btn-top-control btn-circular-audio btn-speaker-pause" aria-label="Pause / Resume Speech" title="Pause / Resume" disabled>
+                        <span aria-hidden="true" class="pause-icon">⏸️</span>
+                    </button>
+                    <button type="button" id="btnAudioMute" style="display:none;" aria-hidden="true" tabindex="-1"></button>
+
+                    <!-- 3. Microphone icon – Voice Assistant -->
+                    <div class="website-voice-assistant" id="websiteVoiceAssistant" title="Website Voice Control">
+                        <button type="button" id="btnVoiceNavMic" class="header-icon-btn btn-top-control btn-circular-va btn-global-mic" aria-label="Control Website with Voice" title="Voice Control (Click once to record, click again to stop and execute)">
+                            <span aria-hidden="true" class="mic-icon">🎙️</span>
+                            <span class="mic-recording-pulse" id="vaRecordingDot" style="display:none;" aria-hidden="true"></span>
+                        </button>
+                        <span id="vaNavStatusPill" class="va-nav-status-pill" style="display:none;" aria-live="polite">Ready</span>
+                        <span id="btnVoiceSpeakerToggle" style="display:none;" aria-hidden="true">
+                            <span id="vaSpeakerIcon"></span><span id="vaSpeakerBadge"></span>
+                        </span>
+                        <span id="btnVoiceGuide" style="display: none;" aria-hidden="true"></span>
+                        <span id="btnVoiceMic" style="display: none;" aria-hidden="true"></span>
+                    </div>
+                </div>
+            </div>
+
+            <a href="/" target="_blank" class="btn-farmer-portal-link" title="Open Farmer Portal in New Tab">
+                <span>🌱 Farmer Portal</span>
+                <span aria-hidden="true">↗</span>
+            </a>
+
+            <div class="admin-user-pill">
+                <span class="admin-badge-icon">👤</span>
+                <span id="topAdminUsername">Super Admin</span>
+            </div>
+
+            <button type="button" id="btnAdminLogout" class="btn-admin-logout" title="End Administrator Session">
+                <span aria-hidden="true">🚪</span>
+                <span>Logout</span>
+            </button>
+        </div>
+    </header>
+
+    <!-- Admin Main Layout -->
+    <div class="admin-layout">
+        <!-- Sidebar Navigation -->
+        <aside class="admin-sidebar" aria-label="Administrator Navigation">
+            <nav class="admin-nav-menu">
+                <button type="button" class="admin-nav-item active" data-tab="overview">
+                    <span class="nav-icon">📊</span>
+                    <span>Executive Overview</span>
+                </button>
+                <button type="button" class="admin-nav-item" data-tab="farmers">
+                    <span class="nav-icon">👨‍🌾</span>
+                    <span>Farmer Accounts</span>
+                    <span class="nav-badge" id="navFarmerCount">0</span>
+                </button>
+                <button type="button" class="admin-nav-item" data-tab="farms">
+                    <span class="nav-icon">🏡</span>
+                    <span>Global Farms</span>
+                    <span class="nav-badge" id="navFarmCount">0</span>
+                </button>
+                <button type="button" class="admin-nav-item" data-tab="schedules">
+                    <span class="nav-icon">💧</span>
+                    <span>Irrigation Schedules</span>
+                    <span class="nav-badge" id="navScheduleCount">0</span>
+                </button>
+                <button type="button" class="admin-nav-item" data-tab="weather">
+                    <span class="nav-icon">🌤️</span>
+                    <span>Weather Monitoring</span>
+                </button>
+                <button type="button" class="admin-nav-item" data-tab="ai-system">
+                    <span class="nav-icon">🤖</span>
+                    <span>AI & System Health</span>
+                </button>
+                <button type="button" class="admin-nav-item" data-tab="audit-logs">
+                    <span class="nav-icon">📜</span>
+                    <span>Security Audit Logs</span>
+                </button>
+            </nav>
+
+            <div class="sidebar-security-badge">
+                <span class="sec-dot"></span>
+                <div>
+                    <strong style="color: #cbd5e1;">RBAC Enforced</strong>
+                    <small>All actions logged</small>
+                </div>
+            </div>
+        </aside>
+
+        <!-- Main Content Area -->
+        <main class="admin-main-content">
+
+            <!-- TAB 1: EXECUTIVE OVERVIEW -->
+            <section id="view-overview" class="admin-tab-view active">
+                <div class="view-header">
+                    <div>
+                        <h2>Executive System Overview</h2>
+                        <p>Centralized real-time telemetry across all registered farmers, farms, land sections, and irrigation schedules.</p>
+                    </div>
+                    <button type="button" class="btn-refresh-data" id="btnRefreshKPIs">
+                        <span aria-hidden="true">🔄</span>
+                        <span>Refresh Telemetry</span>
+                    </button>
+                </div>
+
+                <!-- KPI Grid -->
+                <div class="admin-kpi-grid">
+                    <div class="kpi-card card-farmers">
+                        <div class="kpi-icon">👨‍🌾</div>
+                        <div class="kpi-body">
+                            <span class="kpi-label">Registered Farmers</span>
+                            <strong class="kpi-value" id="kpiTotalFarmers">--</strong>
+                            <div class="kpi-sub">
+                                <span class="tag-active" id="kpiActiveFarmers">-- Active</span>
+                                <span class="tag-suspended" id="kpiSuspendedFarmers">-- Suspended</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="kpi-card card-farms">
+                        <div class="kpi-icon">🏡</div>
+                        <div class="kpi-body">
+                            <span class="kpi-label">Registered Farms</span>
+                            <strong class="kpi-value" id="kpiTotalFarms">--</strong>
+                            <div class="kpi-sub">
+                                <span>Total Land: <strong id="kpiTotalLand">-- Acres</strong></span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="kpi-card card-sections">
+                        <div class="kpi-icon">🌾</div>
+                        <div class="kpi-body">
+                            <span class="kpi-label">Land Sections</span>
+                            <strong class="kpi-value" id="kpiTotalSections">--</strong>
+                            <div class="kpi-sub">
+                                <span id="kpiCultivatedSections">-- Cultivated</span>
+                                <span>·</span>
+                                <span id="kpiEmptySections">-- Empty</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="kpi-card card-crops">
+                        <div class="kpi-icon">🌱</div>
+                        <div class="kpi-body">
+                            <span class="kpi-label">Active Crops</span>
+                            <strong class="kpi-value" id="kpiActiveCrops">--</strong>
+                            <div class="kpi-sub">
+                                <span>Wheat, Rice, Potato, etc.</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="kpi-card card-water">
+                        <div class="kpi-icon">💧</div>
+                        <div class="kpi-body">
+                            <span class="kpi-label">Water Recommended</span>
+                            <strong class="kpi-value" id="kpiTotalWater">-- L</strong>
+                            <div class="kpi-sub">
+                                <span>Cumulative across sections</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="kpi-card card-schedules">
+                        <div class="kpi-icon">📅</div>
+                        <div class="kpi-body">
+                            <span class="kpi-label">Irrigation Schedules</span>
+                            <strong class="kpi-value" id="kpiTotalSchedules">--</strong>
+                            <div class="kpi-sub">
+                                <span class="dot-blue" id="kpiUpcomingSessions">-- Upcoming</span>
+                                <span class="dot-green" id="kpiCompletedSessions">-- Done</span>
+                                <span class="dot-red" id="kpiSkippedSessions">-- Skip</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Recent Activity & System Health Grid -->
+                <div class="overview-dual-grid">
+                    <div class="overview-card">
+                        <div class="card-header-row">
+                            <h3>📜 Recent Administrative Audit Trail</h3>
+                            <button type="button" class="btn-link-action" data-goto="audit-logs">View All Audit Logs →</button>
+                        </div>
+                        <div id="overviewAuditEventsList" class="compact-event-list">
+                            <!-- Populated via JS -->
+                        </div>
+                    </div>
+
+                    <div class="overview-card">
+                        <div class="card-header-row">
+                            <h3>🤖 AI & Service Connectivity Status</h3>
+                            <button type="button" class="btn-link-action" data-goto="ai-system">Diagnostics →</button>
+                        </div>
+                        <div class="system-status-list">
+                            <div class="status-item">
+                                <div class="status-info">
+                                    <strong>Gemini AI Intelligence Engine</strong>
+                                    <small id="overviewGeminiStatus">Checking...</small>
+                                </div>
+                                <span class="status-badge" id="overviewGeminiBadge">Online</span>
+                            </div>
+                            <div class="status-item">
+                                <div class="status-info">
+                                    <strong>Open-Meteo Weather Service</strong>
+                                    <small id="overviewWeatherStatus">15-min SQLite Caching</small>
+                                </div>
+                                <span class="status-badge badge-green" id="overviewWeatherBadge">Operational</span>
+                            </div>
+                            <div class="status-item">
+                                <div class="status-info">
+                                    <strong>ML Decision Engine (Random Forest)</strong>
+                                    <small>Rule-over-ML (16,240 Samples · 100% Accuracy)</small>
+                                </div>
+                                <span class="status-badge badge-green">Production Ready</span>
+                            </div>
+                            <div class="status-item">
+                                <div class="status-info">
+                                    <strong>Security & RBAC Enforcement</strong>
+                                    <small>Password Hashing & Login Rate-Limiting</small>
+                                </div>
+                                <span class="status-badge badge-green">Protected</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- TAB 2: FARMER ACCOUNTS MANAGEMENT -->
+            <section id="view-farmers" class="admin-tab-view">
+                <div class="view-header">
+                    <div>
+                        <h2>Farmer Account Management</h2>
+                        <p>Search, inspect, edit, suspend, activate, or reset passwords for any registered farmer account.</p>
+                    </div>
+                    <div class="view-header-actions">
+                        <button type="button" class="btn-refresh-data" id="btnRefreshFarmers">
+                            <span aria-hidden="true">🔄</span>
+                            <span>Refresh Farmers</span>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Filters Bar -->
+                <div class="admin-filter-bar">
+                    <div class="filter-search-wrap">
+                        <span class="search-glyph">🔍</span>
+                        <input type="text" id="farmerSearchInput" class="admin-filter-input" placeholder="Search by name, ID, phone, email, or village..." />
+                    </div>
+
+                    <div class="filter-dropdown-group">
+                        <select id="farmerStateFilter" class="admin-filter-select">
+                            <option value="all">All States</option>
+                        </select>
+
+                        <select id="farmerStatusFilter" class="admin-filter-select">
+                            <option value="all">All Statuses</option>
+                            <option value="Active">Active Only</option>
+                            <option value="Suspended">Suspended Only</option>
+                        </select>
+                    </div>
+                </div>
+
+                <!-- Farmers Table -->
+                <div class="admin-table-card">
+                    <div class="table-responsive">
+                        <table class="admin-table" id="farmersTable">
+                            <thead>
+                                <tr>
+                                    <th>Farmer ID</th>
+                                    <th>Farmer Name</th>
+                                    <th>Mobile & Email</th>
+                                    <th>State & Village</th>
+                                    <th>Farms</th>
+                                    <th>Total Land</th>
+                                    <th>Sections</th>
+                                    <th>Active Crops</th>
+                                    <th>Status</th>
+                                    <th class="text-right">Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody id="farmersTableBody">
+                                <!-- Populated dynamically via JS -->
+                            </tbody>
+                        </table>
+                    </div>
+                    <div id="farmersEmptyNotice" class="admin-empty-notice" style="display: none;">
+                        No farmer accounts found matching the current search filters.
+                    </div>
+                </div>
+            </section>
+
+            <!-- TAB 3: GLOBAL FARM MANAGEMENT -->
+            <section id="view-farms" class="admin-tab-view">
+                <div class="view-header">
+                    <div>
+                        <h2>Global Farm Management</h2>
+                        <p>Comprehensive register of every agricultural holding across all registered farmers in India.</p>
+                    </div>
+                    <button type="button" class="btn-refresh-data" id="btnRefreshFarms">
+                        <span aria-hidden="true">🔄</span>
+                        <span>Refresh Farms</span>
+                    </button>
+                </div>
+
+                <div class="admin-filter-bar">
+                    <div class="filter-search-wrap">
+                        <span class="search-glyph">🔍</span>
+                        <input type="text" id="farmSearchInput" class="admin-filter-input" placeholder="Filter farms by village, district, state, or owner..." />
+                    </div>
+                </div>
+
+                <div class="admin-table-card">
+                    <div class="table-responsive">
+                        <table class="admin-table" id="farmsTable">
+                            <thead>
+                                <tr>
+                                    <th>Farm Name</th>
+                                    <th>Owner</th>
+                                    <th>Location (Village, District, State)</th>
+                                    <th>GPS Coordinates</th>
+                                    <th>Total Land</th>
+                                    <th>Allocated</th>
+                                    <th>Available</th>
+                                    <th>Sections</th>
+                                    <th>Section Crops</th>
+                                </tr>
+                            </thead>
+                            <tbody id="farmsTableBody">
+                                <!-- Populated dynamically via JS -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </section>
+
+            <!-- TAB 4: GLOBAL IRRIGATION SCHEDULE MONITOR -->
+            <section id="view-schedules" class="admin-tab-view">
+                <div class="view-header">
+                    <div>
+                        <h2>Global Irrigation Schedule Monitoring</h2>
+                        <p>Live schedule overview across all farmers. Independent schedules are preserved and never mixed.</p>
+                    </div>
+                    <button type="button" class="btn-refresh-data" id="btnRefreshSchedules">
+                        <span aria-hidden="true">🔄</span>
+                        <span>Refresh Schedules</span>
+                    </button>
+                </div>
+
+                <!-- Filters -->
+                <div class="admin-filter-bar">
+                    <div class="filter-dropdown-group">
+                        <select id="schedStatusFilter" class="admin-filter-select">
+                            <option value="all">All Schedule Statuses</option>
+                            <option value="Upcoming">Upcoming / Pending</option>
+                            <option value="Completed">Completed</option>
+                            <option value="Skipped">Skipped</option>
+                            <option value="Rescheduled">Rescheduled</option>
+                        </select>
+
+                        <select id="schedCropFilter" class="admin-filter-select">
+                            <option value="all">All Crops</option>
+                            <option value="Wheat">Wheat</option>
+                            <option value="Potato">Potato</option>
+                            <option value="Rice">Rice</option>
+                            <option value="Maize">Maize</option>
+                            <option value="Cotton">Cotton</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="admin-table-card">
+                    <div class="table-responsive">
+                        <table class="admin-table" id="schedulesTable">
+                            <thead>
+                                <tr>
+                                    <th>Farmer</th>
+                                    <th>Location</th>
+                                    <th>Farm & Section</th>
+                                    <th>Crop & Area</th>
+                                    <th>Scheduled Date</th>
+                                    <th>Time</th>
+                                    <th>Water (Litres)</th>
+                                    <th>Status</th>
+                                    <th>AI Agronomic Rationale</th>
+                                </tr>
+                            </thead>
+                            <tbody id="schedulesTableBody">
+                                <!-- Populated dynamically via JS -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </section>
+
+            <!-- TAB 5: WEATHER MONITORING -->
+            <section id="view-weather" class="admin-tab-view">
+                <div class="view-header">
+                    <div>
+                        <h2>Live Weather Monitoring Across Farms</h2>
+                        <p>Real-time observations and forecasts retrieved from Open-Meteo for confirmed farm coordinates.</p>
+                    </div>
+                    <button type="button" class="btn-refresh-data" id="btnRefreshWeatherStations">
+                        <span aria-hidden="true">🔄</span>
+                        <span>Sync Weather Records</span>
+                    </button>
+                </div>
+
+                <div class="admin-table-card">
+                    <div class="table-responsive">
+                        <table class="admin-table" id="weatherStationsTable">
+                            <thead>
+                                <tr>
+                                    <th>Farm Location</th>
+                                    <th>GPS Coordinates</th>
+                                    <th>Farmers / Farms</th>
+                                    <th>Current Temperature</th>
+                                    <th>Relative Humidity</th>
+                                    <th>Current Weather</th>
+                                    <th>Rainfall Today</th>
+                                    <th>24h Rain Forecast</th>
+                                    <th>Provider & Cache</th>
+                                </tr>
+                            </thead>
+                            <tbody id="weatherStationsTableBody">
+                                <!-- Populated dynamically via JS -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </section>
+
+            <!-- TAB 6: AI SYSTEM MONITORING & HEALTH -->
+            <section id="view-ai-system" class="admin-tab-view">
+                <div class="view-header">
+                    <div>
+                        <h2>AI & System Health Diagnostics</h2>
+                        <p>Comprehensive observability into Gemini API, ML prediction pipelines, decision rules, and error tracking.</p>
+                    </div>
+                    <button type="button" class="btn-refresh-data" id="btnRefreshAIStatus">
+                        <span aria-hidden="true">🔄</span>
+                        <span>Run Diagnostics</span>
+                    </button>
+                </div>
+
+                <div class="ai-diagnostics-grid">
+                    <div class="diag-card">
+                        <div class="diag-card-header">
+                            <span class="diag-icon">🤖</span>
+                            <div>
+                                <h3>Gemini Conversational Engine</h3>
+                                <small>Multilingual Natural Language AgriSaathi</small>
+                            </div>
+                        </div>
+                        <div class="diag-body" id="geminiDiagBody">
+                            <!-- Populated via JS -->
+                        </div>
+                    </div>
+
+                    <div class="diag-card">
+                        <div class="diag-card-header">
+                            <span class="diag-icon">🔬</span>
+                            <div>
+                                <h3>Machine Learning Model</h3>
+                                <small>State Agro-Climatic Decision Rule Pipeline</small>
+                            </div>
+                        </div>
+                        <div class="diag-body" id="modelDiagBody">
+                            <!-- Populated via JS -->
+                        </div>
+                    </div>
+
+                    <div class="diag-card">
+                        <div class="diag-card-header">
+                            <span class="diag-icon">🌤️</span>
+                            <div>
+                                <h3>Open-Meteo Weather Pipeline</h3>
+                                <small>WMO Compliant Telemetry Service</small>
+                            </div>
+                        </div>
+                        <div class="diag-body" id="weatherDiagBody">
+                            <!-- Populated via JS -->
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- TAB 7: SECURITY AUDIT LOGS -->
+            <section id="view-audit-logs" class="admin-tab-view">
+                <div class="view-header">
+                    <div>
+                        <h2>Security & Administrative Audit Trail</h2>
+                        <p>Immutable log of every administrative authentication, profile edit, account suspension, password reset, and impersonation.</p>
+                    </div>
+                    <button type="button" class="btn-refresh-data" id="btnRefreshAuditLogs">
+                        <span aria-hidden="true">🔄</span>
+                        <span>Refresh Logs</span>
+                    </button>
+                </div>
+
+                <div class="admin-filter-bar">
+                    <div class="filter-dropdown-group">
+                        <select id="auditActionFilter" class="admin-filter-select">
+                            <option value="all">All Administrative Actions</option>
+                            <option value="LOGIN_SUCCESS">Admin Login</option>
+                            <option value="FAILED_LOGIN">Failed Login</option>
+                            <option value="IMPERSONATE_FARMER">Farmer Impersonation</option>
+                            <option value="SUSPEND_FARMER">Farmer Suspension</option>
+                            <option value="ACTIVATE_FARMER">Farmer Activation</option>
+                            <option value="RESET_FARMER_PASSWORD">Password Reset</option>
+                            <option value="UPDATE_FARMER_PROFILE">Profile Update</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="admin-table-card">
+                    <div class="table-responsive">
+                        <table class="admin-table" id="auditLogsTable">
+                            <thead>
+                                <tr>
+                                    <th>Timestamp</th>
+                                    <th>Admin</th>
+                                    <th>Action</th>
+                                    <th>Target Type</th>
+                                    <th>Target ID</th>
+                                    <th>Audit Details</th>
+                                    <th>IP Address</th>
+                                </tr>
+                            </thead>
+                            <tbody id="auditLogsTableBody">
+                                <!-- Populated dynamically via JS -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </section>
+        </main>
+    </div>
+
+    <!-- MODAL 1: FARMER INSPECTION DETAIL MODAL -->
+    <div id="farmerInspectModal" class="custom-modal" style="display: none;" role="dialog" aria-modal="true" aria-labelledby="inspectModalTitle">
+        <div class="modal-backdrop" id="inspectModalBackdrop"></div>
+        <div class="modal-dialog admin-detail-dialog">
+            <div class="modal-header">
+                <div class="modal-title-group">
+                    <span class="modal-icon">👨‍🌾</span>
+                    <div>
+                        <h3 id="inspectModalTitle">Farmer Account Inspection</h3>
+                        <p class="modal-subtext" id="inspectModalFarmerId">Farmer ID: --</p>
+                    </div>
+                </div>
+                <button type="button" class="modal-close-btn" id="inspectModalCloseBtn">✕</button>
+            </div>
+            <div class="modal-body" id="inspectModalBody">
+                <!-- Dynamically populated -->
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn-close-modal" id="inspectModalDoneBtn">Close</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL 2: EDIT FARMER PROFILE MODAL -->
+    <div id="editFarmerModal" class="custom-modal" style="display: none;" role="dialog" aria-modal="true" aria-labelledby="editFarmerModalTitle">
+        <div class="modal-backdrop" id="editFarmerModalBackdrop"></div>
+        <div class="modal-dialog">
+            <div class="modal-header">
+                <div class="modal-title-group">
+                    <span class="modal-icon">✏️</span>
+                    <h3 id="editFarmerModalTitle">Edit Farmer Profile</h3>
+                </div>
+                <button type="button" class="modal-close-btn" id="editFarmerModalCloseBtn">✕</button>
+            </div>
+            <form id="editFarmerForm" class="modal-body">
+                <input type="hidden" id="editFarmerId" />
+                <div class="form-group">
+                    <label for="editFarmerName">Full Name *</label>
+                    <input type="text" id="editFarmerName" class="form-input" required />
+                </div>
+                <div class="form-row-2">
+                    <div class="form-group">
+                        <label for="editFarmerPhone">Mobile Number *</label>
+                        <input type="tel" id="editFarmerPhone" class="form-input" required />
+                    </div>
+                    <div class="form-group">
+                        <label for="editFarmerEmail">Email (Optional)</label>
+                        <input type="email" id="editFarmerEmail" class="form-input" />
+                    </div>
+                </div>
+                <div class="form-row-3">
+                    <div class="form-group">
+                        <label for="editFarmerState">State *</label>
+                        <input type="text" id="editFarmerState" class="form-input" required />
+                    </div>
+                    <div class="form-group">
+                        <label for="editFarmerDistrict">District</label>
+                        <input type="text" id="editFarmerDistrict" class="form-input" />
+                    </div>
+                    <div class="form-group">
+                        <label for="editFarmerVillage">Village</label>
+                        <input type="text" id="editFarmerVillage" class="form-input" />
+                    </div>
+                </div>
+                <div id="editFarmerFeedback" class="form-feedback" style="display: none;"></div>
+                <div class="modal-footer">
+                    <button type="button" class="btn-close-modal" id="editFarmerCancelBtn">Cancel</button>
+                    <button type="submit" class="btn-primary-action">Save Changes</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- MODAL 3: RESET FARMER PASSWORD MODAL -->
+    <div id="resetPasswordModal" class="custom-modal" style="display: none;" role="dialog" aria-modal="true" aria-labelledby="resetPasswordTitle">
+        <div class="modal-backdrop" id="resetPasswordBackdrop"></div>
+        <div class="modal-dialog" style="max-width: 480px;">
+            <div class="modal-header">
+                <div class="modal-title-group">
+                    <span class="modal-icon">🔑</span>
+                    <h3 id="resetPasswordTitle">Reset Farmer Password</h3>
+                </div>
+                <button type="button" class="modal-close-btn" id="resetPasswordCloseBtn">✕</button>
+            </div>
+            <form id="resetPasswordForm" class="modal-body">
+                <input type="hidden" id="resetFarmerId" />
+                <p id="resetFarmerNameLabel" style="font-size: 13px; color: #475569; margin-bottom: 12px;">
+                    Setting new password for farmer.
+                </p>
+                <div class="form-group">
+                    <label for="adminNewFarmerPassword">New Password *</label>
+                    <input type="password" id="adminNewFarmerPassword" class="form-input" placeholder="At least 6 characters" minlength="6" required />
+                </div>
+                <small class="form-hint">
+                    🔒 The password will be hashed with scrypt/werkzeug. The plain password will never be stored or logged.
+                </small>
+                <div id="resetPasswordFeedback" class="form-feedback" style="display: none; margin-top: 10px;"></div>
+                <div class="modal-footer">
+                    <button type="button" class="btn-close-modal" id="resetPasswordCancelBtn">Cancel</button>
+                    <button type="submit" class="btn-primary-action">Update Password</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- MODAL 4: ADMINISTRATIVE IMPERSONATION CONFIRMATION MODAL -->
+    <div id="impersonationModal" class="custom-modal" style="display: none;" role="dialog" aria-modal="true" aria-labelledby="impersonationModalTitle">
+        <div class="modal-backdrop" id="impersonationBackdrop"></div>
+        <div class="modal-dialog" style="max-width: 520px;">
+            <div class="modal-header">
+                <div class="modal-title-group">
+                    <span class="modal-icon" style="color: #f59e0b;">⚠️</span>
+                    <h3 id="impersonationModalTitle">Confirm Administrative Inspection</h3>
+                </div>
+                <button type="button" class="modal-close-btn" id="impersonationCloseBtn">✕</button>
+            </div>
+            <form id="impersonationForm" class="modal-body">
+                <input type="hidden" id="impersonateFarmerId" />
+                <div class="alert-box-warning">
+                    <strong>Administrative Oversight Protocol</strong>
+                    <p id="impersonationNoticeText">
+                        You are about to enter Inspection Mode for Farmer <strong id="impersonateTargetName">--</strong>.
+                    </p>
+                    <ul style="margin: 8px 0 0 18px; font-size: 12px; line-height: 1.4;">
+                        <li>A prominent warning banner will be displayed at the top of the farmer dashboard.</li>
+                        <li>An entry will be permanently logged in the security audit trail.</li>
+                        <li>No credentials will be exposed.</li>
+                        <li>You can exit back to this Super Admin portal at any time with 1-click.</li>
+                    </ul>
+                </div>
+
+                <div class="form-group" style="margin-top: 14px;">
+                    <label for="impersonationReason">Inspection Reason / Purpose *</label>
+                    <input type="text" id="impersonationReason" class="form-input" value="Diagnostic verification & irrigation schedule inspection" required />
+                </div>
+
+                <div id="impersonationFeedback" class="form-feedback" style="display: none;"></div>
+
+                <div class="modal-footer">
+                    <button type="button" class="btn-close-modal" id="impersonationCancelBtn">Cancel</button>
+                    <button type="submit" class="btn-primary-action" style="background: #f59e0b; border-color: #d97706;">
+                        <span>Open Farmer Dashboard</span>
+                        <span aria-hidden="true">➜</span>
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script src="{{ url_for('static', filename='i18n.js') }}"></script>
+    <script src="{{ url_for('static', filename='voice_controller.js') }}"></script>
+    <script src="{{ url_for('static', filename='admin.js') }}"></script>
+</body>
+</html>

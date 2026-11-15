@@ -1,0 +1,649 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Farmer Login — Smart Irrigation Planner</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <style>
+        :root {
+            --primary-green: #1b8e4f;
+            --primary-dark: #0f5132;
+            --primary-accent: #22c55e;
+            --card-bg: rgba(255, 255, 255, 0.96);
+            --text-dark: #1e293b;
+            --text-muted: #64748b;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+        }
+
+        body.auth-page {
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: linear-gradient(135deg, rgba(8, 38, 19, 0.82), rgba(15, 60, 32, 0.78)),
+                        url('https://images.unsplash.com/photo-1500937386664-56d1dfef3854?auto=format&fit=crop&w=1920&q=80') center/cover no-repeat fixed;
+            padding: 24px 16px;
+            color: #fff;
+            position: relative;
+        }
+
+        .auth-container {
+            width: 100%;
+            max-width: 460px;
+            position: relative;
+            z-index: 2;
+        }
+
+        .brand-header {
+            text-align: center;
+            margin-bottom: 24px;
+        }
+
+        .brand-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            background: rgba(255, 255, 255, 0.15);
+            backdrop-filter: blur(10px);
+            padding: 6px 16px;
+            border-radius: 999px;
+            border: 1px solid rgba(255, 255, 255, 0.25);
+            font-size: 13px;
+            font-weight: 600;
+            color: #dcfce7;
+            margin-bottom: 12px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+        }
+
+        .brand-header h1 {
+            font-size: 30px;
+            font-weight: 800;
+            letter-spacing: -0.5px;
+            color: #ffffff;
+            text-shadow: 0 2px 10px rgba(0, 0, 0, 0.4);
+            margin-bottom: 4px;
+        }
+
+        .brand-tagline {
+            font-size: 15px;
+            color: #bbf7d0;
+            font-weight: 500;
+            text-shadow: 0 1px 4px rgba(0, 0, 0, 0.3);
+        }
+
+        .brand-subtext {
+            font-size: 12px;
+            color: #cbd5e1;
+            margin-top: 2px;
+        }
+
+        .auth-card {
+            background: var(--card-bg);
+            backdrop-filter: blur(20px);
+            border-radius: 20px;
+            padding: 32px 28px;
+            box-shadow: 0 20px 45px rgba(0, 0, 0, 0.35), 0 0 0 1px rgba(255, 255, 255, 0.4);
+            color: var(--text-dark);
+            animation: cardFadeUp 0.35s ease-out;
+        }
+
+        @keyframes cardFadeUp {
+            from { opacity: 0; transform: translateY(16px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .card-heading {
+            margin-bottom: 22px;
+            text-align: left;
+        }
+
+        .card-heading h2 {
+            font-size: 22px;
+            font-weight: 700;
+            color: #0f172a;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .card-heading p {
+            font-size: 13px;
+            color: var(--text-muted);
+            margin-top: 4px;
+        }
+
+        /* Face Lock Button */
+        .btn-facelock-hero {
+            width: 100%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 12px;
+            background: linear-gradient(135deg, #059669, #10b981);
+            color: #ffffff;
+            border: none;
+            padding: 14px 20px;
+            border-radius: 12px;
+            font-size: 15px;
+            font-weight: 700;
+            cursor: pointer;
+            box-shadow: 0 8px 20px rgba(16, 185, 129, 0.35);
+            transition: all 0.2s ease;
+            margin-bottom: 20px;
+        }
+
+        .btn-facelock-hero:hover {
+            background: linear-gradient(135deg, #047857, #059669);
+            transform: translateY(-1px);
+            box-shadow: 0 10px 24px rgba(16, 185, 129, 0.45);
+        }
+
+        .btn-facelock-hero:active {
+            transform: translateY(1px);
+        }
+
+        .facelock-icon-badge {
+            font-size: 22px;
+            line-height: 1;
+        }
+
+        .hero-sub {
+            display: block;
+            font-size: 11px;
+            font-weight: 400;
+            opacity: 0.9;
+            margin-top: 2px;
+        }
+
+        .auth-divider {
+            display: flex;
+            align-items: center;
+            text-align: center;
+            margin: 20px 0;
+            color: #94a3b8;
+            font-size: 12px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.8px;
+        }
+
+        .auth-divider::before,
+        .auth-divider::after {
+            content: "";
+            flex: 1;
+            border-bottom: 1px solid #e2e8f0;
+        }
+
+        .auth-divider span {
+            padding: 0 12px;
+        }
+
+        /* Form Controls */
+        .form-group {
+            margin-bottom: 16px;
+            text-align: left;
+        }
+
+        .form-label {
+            display: block;
+            font-size: 13px;
+            font-weight: 600;
+            color: #334155;
+            margin-bottom: 6px;
+        }
+
+        .input-wrap {
+            position: relative;
+            display: flex;
+            align-items: center;
+        }
+
+        .input-icon {
+            position: absolute;
+            left: 14px;
+            font-size: 16px;
+            color: #64748b;
+            pointer-events: none;
+        }
+
+        .form-input {
+            width: 100%;
+            padding: 12px 42px 12px 42px;
+            font-size: 14px;
+            border: 1.5px solid #cbd5e1;
+            border-radius: 10px;
+            background: #ffffff;
+            color: #0f172a;
+            outline: none;
+            transition: all 0.2s ease;
+        }
+
+        .form-input:focus {
+            border-color: var(--primary-green);
+            box-shadow: 0 0 0 3px rgba(34, 197, 94, 0.2);
+        }
+
+        .password-toggle-btn {
+            position: absolute;
+            right: 12px;
+            background: transparent;
+            border: none;
+            font-size: 16px;
+            cursor: pointer;
+            color: #64748b;
+            padding: 4px;
+        }
+
+        .password-toggle-btn:hover {
+            color: #0f172a;
+        }
+
+        .btn-submit {
+            width: 100%;
+            background: var(--primary-green);
+            color: #ffffff;
+            border: none;
+            padding: 13px 20px;
+            border-radius: 10px;
+            font-size: 15px;
+            font-weight: 700;
+            cursor: pointer;
+            transition: background 0.2s ease, transform 0.1s ease;
+            box-shadow: 0 4px 12px rgba(27, 142, 79, 0.25);
+            margin-top: 6px;
+        }
+
+        .btn-submit:hover {
+            background: var(--primary-dark);
+            transform: translateY(-1px);
+        }
+
+        .btn-submit:active {
+            transform: translateY(1px);
+        }
+
+        /* Alerts */
+        .auth-alert {
+            padding: 12px 14px;
+            border-radius: 10px;
+            font-size: 13px;
+            line-height: 1.4;
+            margin-bottom: 16px;
+            display: none;
+        }
+
+        .auth-alert.error { background: #fef2f2; color: #991b1b; border: 1px solid #fecaca; }
+        .auth-alert.success { background: #f0fdf4; color: #166534; border: 1px solid #bbf7d0; }
+        .auth-alert.info { background: #f0f9ff; color: #075985; border: 1px solid #bae6fd; }
+
+        /* Footer Links */
+        .card-footer {
+            margin-top: 22px;
+            text-align: center;
+            font-size: 13px;
+            color: #475569;
+            border-top: 1px solid #e2e8f0;
+            padding-top: 18px;
+        }
+
+        .card-footer a {
+            color: var(--primary-green);
+            font-weight: 700;
+            text-decoration: none;
+        }
+
+        .card-footer a:hover {
+            text-decoration: underline;
+        }
+
+        .admin-link-row {
+            margin-top: 16px;
+            text-align: center;
+        }
+
+        .admin-link-row a {
+            font-size: 12px;
+            color: rgba(255, 255, 255, 0.7);
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+        }
+
+        .admin-link-row a:hover {
+            color: #ffffff;
+            text-decoration: underline;
+        }
+
+        @media (max-width: 480px) {
+            .auth-card { padding: 26px 20px; border-radius: 16px; }
+            .brand-header h1 { font-size: 26px; }
+        }
+    </style>
+</head>
+<body class="auth-page">
+    <div class="auth-container">
+        <!-- Top Navigation: Compact 23-Language Selector, Global Speaker & Global Voice Mic -->
+        <div class="auth-top-controls global-top-controls" id="globalTopControls">
+            <div class="lang-selector-compact">
+                <span class="globe-icon" aria-hidden="true">🌐</span>
+                <select id="languageSelect" class="lang-selector" aria-label="Select Application Language">
+                    <option value="en">English (English)</option>
+                    <option value="hi">हिन्दी (Hindi)</option>
+                    <option value="te">తెలుగు (Telugu)</option>
+                    <option value="pa">ਪੰਜਾਬੀ (Punjabi)</option>
+                    <option value="ta">தமிழ் (Tamil)</option>
+                    <option value="bn">বাংলা (Bengali)</option>
+                    <option value="mr">मराठी (Marathi)</option>
+                    <option value="gu">ગુજરાતી (Gujarati)</option>
+                    <option value="kn">ಕನ್ನಡ (Kannada)</option>
+                    <option value="ml">മലയാളം (Malayalam)</option>
+                    <option value="or">ଓଡ଼ିଆ (Odia)</option>
+                    <option value="as">অসমীয়া (Assamese)</option>
+                    <option value="ur">اردو (Urdu)</option>
+                    <option value="sa">संस्कृतम् (Sanskrit)</option>
+                    <option value="ne">नेपाली (Nepali)</option>
+                    <option value="kok">कोंकणी (Konkani)</option>
+                    <option value="mai">मैथिली (Maithili)</option>
+                    <option value="doi">डोगरी (Dogri)</option>
+                    <option value="brx">बड़ो (Bodo)</option>
+                    <option value="ks">کٲشُر (Kashmiri)</option>
+                    <option value="sd">سنڌي (Sindhi)</option>
+                    <option value="mni">মৈতৈলোন্ (Manipuri)</option>
+                    <option value="sat">ᱥᱟᱱᱛᱟᱲᱤ (Santali)</option>
+                </select>
+            </div>
+
+            <!-- Right side: Three separate icon-only buttons, aligned horizontally -->
+            <div class="header-controls-right" id="headerControlsRight">
+                <!-- 1. Speaker icon – Text-to-Speech ON/OFF -->
+                <button type="button" id="btnAudioListen" class="header-icon-btn btn-top-control btn-circular-audio btn-speaker-read" aria-label="Speaker ON / OFF" title="Speaker ON - Click to read page content">
+                    <span aria-hidden="true" class="speaker-icon">🔈</span>
+                </button>
+
+                <!-- 2. Pause icon – Pause/Resume speech -->
+                <button type="button" id="btnAudioPause" class="header-icon-btn btn-top-control btn-circular-audio btn-speaker-pause" aria-label="Pause / Resume Speech" title="Pause / Resume" disabled>
+                    <span aria-hidden="true" class="pause-icon">⏸️</span>
+                </button>
+                <button type="button" id="btnAudioMute" style="display:none;" aria-hidden="true" tabindex="-1"></button>
+
+                <!-- 3. Microphone icon – Voice Assistant -->
+                <div class="website-voice-assistant" id="websiteVoiceAssistant" title="Website Voice Control">
+                    <button type="button" id="btnVoiceNavMic" class="header-icon-btn btn-top-control btn-circular-va btn-global-mic" aria-label="Control Website with Voice" title="Voice Control (Click once to record, click again to stop and execute)">
+                        <span aria-hidden="true" class="mic-icon">🎙️</span>
+                        <span class="mic-recording-pulse" id="vaRecordingDot" style="display:none;" aria-hidden="true"></span>
+                    </button>
+                    <span id="vaNavStatusPill" class="va-nav-status-pill" style="display:none;" aria-live="polite">Ready</span>
+                    <span id="btnVoiceSpeakerToggle" style="display:none;" aria-hidden="true">
+                        <span id="vaSpeakerIcon"></span><span id="vaSpeakerBadge"></span>
+                    </span>
+                    <span id="btnVoiceGuide" style="display: none;" aria-hidden="true"></span>
+                    <span id="btnVoiceMic" style="display: none;" aria-hidden="true"></span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Branding Header -->
+        <div class="brand-header">
+            <div class="brand-badge">
+                <span>🌱</span>
+                <span id="mainSubtext" data-i18n="subtext">AI-Powered Agriculture & Precision Water Management</span>
+            </div>
+            <h1 id="mainWelcomeHeading" data-i18n="welcomeHeader">Welcome to Smart Irrigation Planner</h1>
+            <p id="mainTagline" class="brand-tagline" data-i18n="tagline">Grow smarter. Save water. Farm better.</p>
+        </div>
+
+        <!-- Login Card -->
+        <div class="auth-card">
+            <div class="card-heading">
+                <h2><span>👨‍🌾</span> <span id="loginTitle" data-i18n="welcomeFarmer">Welcome, Farmer</span></h2>
+                <p id="loginSub" data-i18n="signInToManage">Sign in to manage your farm</p>
+            </div>
+
+            <!-- Global Feedback Alert -->
+            <div id="loginAlert" class="auth-alert" role="alert"></div>
+
+            <!-- Login with Face Lock Button -->
+            <button type="button" id="btnLoginFaceLock" class="btn-facelock-hero" title="Instant Face ID / Fingerprint / Device PIN login">
+                <span class="facelock-icon-badge" aria-hidden="true">👤</span>
+                <div>
+                    <span data-i18n="btnLoginFaceLock">Login with Face Lock</span>
+                    <span class="hero-sub" data-i18n="btnFaceLockSub">Use your registered device passkey</span>
+                </div>
+            </button>
+
+            <div class="auth-divider">
+                <span data-i18n="orSignInWithPassword">OR SIGN IN WITH PASSWORD</span>
+            </div>
+
+            <!-- Username & Password Form -->
+            <form id="formFarmerLogin" novalidate autocomplete="on">
+                <!-- Username -->
+                <div class="form-group">
+                    <label class="form-label" for="loginUsername" id="lblUsername" data-i18n="usernameLabel">Username</label>
+                    <div class="input-wrap">
+                        <span class="input-icon">👤</span>
+                        <input type="text" id="loginUsername" name="username" class="form-input" placeholder="Enter your username" data-i18n-placeholder="usernamePlaceholder" required autocomplete="username">
+                    </div>
+                </div>
+
+                <!-- Password with Show/Hide Control -->
+                <div class="form-group">
+                    <label class="form-label" for="loginPassword" id="lblPassword" data-i18n="passwordLabel">Password</label>
+                    <div class="input-wrap">
+                        <span class="input-icon">🔒</span>
+                        <input type="password" id="loginPassword" name="password" class="form-input" placeholder="Enter your password" data-i18n-placeholder="passwordPlaceholder" required autocomplete="current-password">
+                        <button type="button" id="btnToggleLoginPassword" class="password-toggle-btn" aria-label="Toggle password visibility">👁️</button>
+                    </div>
+                </div>
+
+                <!-- Sign In Button -->
+                <button type="submit" id="btnSignIn" class="btn-submit" data-i18n="btnSignIn">
+                    Sign In
+                </button>
+            </form>
+
+            <!-- Card Footer -->
+            <div class="card-footer">
+                <span data-i18n="newFarmerPrompt">New farmer?</span> <a href="/register" data-i18n="createAccountLink">Create Account</a>
+            </div>
+        </div>
+
+        <!-- Super Admin Link -->
+        <div class="admin-link-row">
+            <a href="/admin/login">
+                <span>🔒</span>
+                <span data-i18n="superAdminPortal">Super Admin Portal</span>
+            </a>
+        </div>
+    </div>
+
+    <script>
+        // WebAuthn domain standardization: seamlessly redirect 127.0.0.1 to localhost
+        if (window.location.hostname === '127.0.0.1') {
+            window.location.replace(window.location.href.replace('://127.0.0.1', '://localhost'));
+        }
+
+        function showAlert(msg, type = "error") {
+            const el = document.getElementById("loginAlert");
+            el.className = `auth-alert ${type}`;
+            el.textContent = msg;
+            el.style.display = "block";
+        }
+
+        function hideAlert() {
+            document.getElementById("loginAlert").style.display = "none";
+        }
+
+        // Show/hide password control
+        const inputPassword = document.getElementById("loginPassword");
+        const btnToggle = document.getElementById("btnToggleLoginPassword");
+        if (inputPassword && btnToggle) {
+            btnToggle.addEventListener("click", () => {
+                const isPassword = inputPassword.type === "password";
+                inputPassword.type = isPassword ? "text" : "password";
+                btnToggle.textContent = isPassword ? "🙈" : "👁️";
+            });
+        }
+
+        // WebAuthn buffer conversion helpers
+        function base64UrlToBuffer(base64url) {
+            let base64 = base64url.replace(/-/g, "+").replace(/_/g, "/");
+            while (base64.length % 4) base64 += "=";
+            const binary = atob(base64);
+            const bytes = new Uint8Array(binary.length);
+            for (let i = 0; i < binary.length; i++) bytes[i] = binary.charCodeAt(i);
+            return bytes.buffer;
+        }
+
+        function bufferToBase64Url(buffer) {
+            const bytes = new Uint8Array(buffer);
+            let binary = "";
+            for (let i = 0; i < bytes.byteLength; i++) binary += String.fromCharCode(bytes[i]);
+            return btoa(binary).replace(/\+/g, "-").replace(/\//g, "_").replace(/=/g, "");
+        }
+
+        // 1. Password Login Form Submit
+        const formLogin = document.getElementById("formFarmerLogin");
+        const btnSignIn = document.getElementById("btnSignIn");
+
+        formLogin.addEventListener("submit", async (e) => {
+            e.preventDefault();
+            hideAlert();
+
+            const username = document.getElementById("loginUsername").value.trim();
+            const password = document.getElementById("loginPassword").value.trim();
+
+            if (!username) {
+                showAlert("Please enter your username.");
+                document.getElementById("loginUsername").focus();
+                return;
+            }
+            if (!password) {
+                showAlert("Please enter your password.");
+                document.getElementById("loginPassword").focus();
+                return;
+            }
+
+            btnSignIn.disabled = true;
+            btnSignIn.textContent = "Signing In...";
+
+            try {
+                const res = await fetch("/api/auth/login", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ username, password })
+                });
+
+                const data = await res.json();
+
+                if (res.ok && data.status === "success") {
+                    showAlert("Authentication successful! Redirecting...", "success");
+                    window.location.href = data.redirect || "/dashboard";
+                } else {
+                    showAlert(data.error || "Invalid username or password.");
+                    btnSignIn.disabled = false;
+                    btnSignIn.textContent = "Sign In";
+                }
+            } catch (err) {
+                showAlert("Network connection error. Please try again.");
+                btnSignIn.disabled = false;
+                btnSignIn.textContent = "Sign In";
+            }
+        });
+
+        // 2. Login with Face Lock Button
+        const btnFaceLock = document.getElementById("btnLoginFaceLock");
+        btnFaceLock.addEventListener("click", async () => {
+            hideAlert();
+
+            // Check browser WebAuthn support
+            if (!window.PublicKeyCredential) {
+                showAlert("Face Lock / Biometrics is not supported on this browser. Please sign in with your username and password below.", "info");
+                document.getElementById("loginUsername").focus();
+                return;
+            }
+
+            const username = document.getElementById("loginUsername").value.trim();
+            btnFaceLock.disabled = true;
+            showAlert("Please scan Face Unlock, touch your fingerprint sensor, or enter device PIN...", "info");
+
+            try {
+                // Request authentication options
+                const optRes = await fetch("/api/auth/passkey/login-options", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ username: username || null })
+                });
+
+                if (!optRes.ok) {
+                    const errData = await optRes.json();
+                    throw new Error(errData.error || "Unable to start Face Lock authentication.");
+                }
+
+                const options = await optRes.json();
+                options.challenge = base64UrlToBuffer(options.challenge);
+                if (options.allowCredentials && Array.isArray(options.allowCredentials)) {
+                    options.allowCredentials = options.allowCredentials.map(c => ({
+                        ...c,
+                        id: base64UrlToBuffer(c.id)
+                    }));
+                }
+
+                // Trigger device native Face Unlock / Fingerprint / PIN prompt
+                const credential = await navigator.credentials.get({ publicKey: options });
+                if (!credential) {
+                    throw new Error("No credential was returned from authenticator.");
+                }
+
+                // Serialize for server verification
+                const credentialJson = {
+                    id: credential.id,
+                    rawId: bufferToBase64Url(credential.rawId),
+                    type: credential.type,
+                    response: {
+                        authenticatorData: bufferToBase64Url(credential.response.authenticatorData),
+                        clientDataJSON: bufferToBase64Url(credential.response.clientDataJSON),
+                        signature: bufferToBase64Url(credential.response.signature),
+                        userHandle: credential.response.userHandle ? bufferToBase64Url(credential.response.userHandle) : null,
+                    }
+                };
+
+                // Send to backend
+                const verifyRes = await fetch("/api/auth/passkey/login-verify", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ credential: credentialJson })
+                });
+
+                const verifyData = await verifyRes.json();
+
+                if (verifyRes.ok && verifyData.status === "success") {
+                    showAlert(`Face Lock verified! Welcome, ${verifyData.farmer.name || verifyData.farmer.username}. Redirecting...`, "success");
+                    window.location.href = verifyData.redirect || "/dashboard";
+                } else {
+                    throw new Error(verifyData.error || "Face Lock verification failed.");
+                }
+            } catch (err) {
+                console.warn("Face Lock login error:", err);
+                btnFaceLock.disabled = false;
+                if (err.name === "NotAllowedError") {
+                    showAlert("Face Lock authentication was cancelled. You can sign in with your password below.", "info");
+                } else {
+                    showAlert(err.message || "Face Lock not recognized. Please sign in with your password below.", "error");
+                }
+                document.getElementById("loginPassword").focus();
+            }
+        });
+    </script>
+    <script src="{{ url_for('static', filename='i18n.js') }}"></script>
+    <script src="{{ url_for('static', filename='voice_controller.js') }}"></script>
+</body>
+</html>

@@ -1,0 +1,796 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>First-Time Setup — Smart Irrigation Planner</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <style>
+        :root {
+            --primary-green: #1b8e4f;
+            --primary-dark: #0f5132;
+            --primary-accent: #22c55e;
+            --card-bg: rgba(255, 255, 255, 0.98);
+            --text-dark: #0f172a;
+            --text-muted: #64748b;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+        }
+
+        body.onboard-page {
+            min-height: 100vh;
+            background: linear-gradient(135deg, rgba(8, 38, 19, 0.88), rgba(15, 60, 32, 0.84)),
+                        url('https://images.unsplash.com/photo-1500937386664-56d1dfef3854?auto=format&fit=crop&w=1920&q=80') center/cover no-repeat fixed;
+            padding: 30px 16px;
+            color: #fff;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .wizard-container {
+            width: 100%;
+            max-width: 680px;
+            position: relative;
+            z-index: 2;
+        }
+
+        .brand-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            background: rgba(255, 255, 255, 0.15);
+            backdrop-filter: blur(10px);
+            padding: 6px 16px;
+            border-radius: 999px;
+            border: 1px solid rgba(255, 255, 255, 0.25);
+            font-size: 13px;
+            font-weight: 600;
+            color: #dcfce7;
+            margin-bottom: 12px;
+        }
+
+        .wizard-header {
+            text-align: center;
+            margin-bottom: 24px;
+        }
+
+        .wizard-header h1 {
+            font-size: 28px;
+            font-weight: 800;
+            color: #ffffff;
+            letter-spacing: -0.5px;
+        }
+
+        .wizard-header p {
+            font-size: 14px;
+            color: #bbf7d0;
+            margin-top: 4px;
+        }
+
+        /* Stepper Navigation (Exactly 4 Steps) */
+        .stepper-nav {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 24px;
+            position: relative;
+        }
+
+        .stepper-nav::before {
+            content: "";
+            position: absolute;
+            top: 18px;
+            left: 20px;
+            right: 20px;
+            height: 3px;
+            background: rgba(255, 255, 255, 0.25);
+            z-index: 1;
+        }
+
+        .step-item {
+            position: relative;
+            z-index: 2;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 6px;
+            cursor: default;
+        }
+
+        .step-circle {
+            width: 38px;
+            height: 38px;
+            border-radius: 50%;
+            background: #1e293b;
+            color: #ffffff;
+            border: 3px solid rgba(255, 255, 255, 0.4);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 700;
+            font-size: 14px;
+            transition: all 0.2s ease;
+        }
+
+        .step-item.active .step-circle {
+            background: var(--primary-accent);
+            color: #052e16;
+            border-color: #ffffff;
+            box-shadow: 0 0 15px rgba(34, 197, 94, 0.6);
+        }
+
+        .step-item.completed .step-circle {
+            background: var(--primary-green);
+            color: #ffffff;
+            border-color: #dcfce7;
+        }
+
+        .step-label {
+            font-size: 12px;
+            font-weight: 600;
+            color: rgba(255, 255, 255, 0.7);
+            white-space: nowrap;
+        }
+
+        .step-item.active .step-label {
+            color: #ffffff;
+            font-weight: 700;
+        }
+
+        /* Wizard Card */
+        .wizard-card {
+            background: var(--card-bg);
+            backdrop-filter: blur(20px);
+            border-radius: 20px;
+            padding: 32px 28px;
+            box-shadow: 0 20px 45px rgba(0, 0, 0, 0.35);
+            color: var(--text-dark);
+            animation: cardFadeUp 0.3s ease-out;
+        }
+
+        @keyframes cardFadeUp {
+            from { opacity: 0; transform: translateY(14px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .step-pane {
+            display: none;
+        }
+
+        .step-pane.active {
+            display: block;
+        }
+
+        .pane-title {
+            font-size: 20px;
+            font-weight: 700;
+            color: #0f172a;
+            margin-bottom: 6px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .pane-desc {
+            font-size: 13px;
+            color: var(--text-muted);
+            margin-bottom: 20px;
+            line-height: 1.5;
+        }
+
+        .form-group {
+            margin-bottom: 16px;
+            text-align: left;
+        }
+
+        .form-label {
+            display: block;
+            font-size: 13px;
+            font-weight: 600;
+            color: #334155;
+            margin-bottom: 6px;
+        }
+
+        .form-input, .form-select {
+            width: 100%;
+            padding: 12px 14px;
+            font-size: 14px;
+            border: 1.5px solid #cbd5e1;
+            border-radius: 10px;
+            background: #ffffff;
+            color: #0f172a;
+            outline: none;
+            transition: all 0.2s ease;
+        }
+
+        .form-input:focus, .form-select:focus {
+            border-color: var(--primary-green);
+            box-shadow: 0 0 0 3px rgba(34, 197, 94, 0.2);
+        }
+
+        .form-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px;
+        }
+
+        .form-row-3 {
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr;
+            gap: 12px;
+        }
+
+        /* GPS Detection Box */
+        .gps-detect-box {
+            background: #f0fdf4;
+            border: 1.5px dashed #86efac;
+            padding: 18px;
+            border-radius: 12px;
+            text-align: center;
+            margin-bottom: 18px;
+        }
+
+        .btn-detect-gps {
+            background: var(--primary-green);
+            color: #ffffff;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            transition: all 0.2s;
+        }
+
+        .btn-detect-gps:hover {
+            background: var(--primary-dark);
+        }
+
+        .gps-status-text {
+            font-size: 12px;
+            color: #166534;
+            margin-top: 8px;
+            display: block;
+        }
+
+        /* Review Details Box */
+        .review-box {
+            background: #f8fafc;
+            border: 1.5px solid #e2e8f0;
+            border-radius: 14px;
+            padding: 20px;
+            margin-bottom: 20px;
+        }
+
+        .review-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 10px 0;
+            border-bottom: 1px solid #f1f5f9;
+            font-size: 14px;
+        }
+
+        .review-row:last-child {
+            border-bottom: none;
+        }
+
+        .review-label {
+            color: #64748b;
+            font-weight: 500;
+        }
+
+        .review-value {
+            color: #0f172a;
+            font-weight: 700;
+            text-align: right;
+        }
+
+        .tip-callout {
+            background: #f0fdf4;
+            border-left: 4px solid var(--primary-accent);
+            padding: 12px 14px;
+            border-radius: 8px;
+            font-size: 13px;
+            color: #166534;
+            line-height: 1.5;
+            margin-bottom: 20px;
+        }
+
+        /* Buttons Footer */
+        .wizard-buttons {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 24px;
+            border-top: 1px solid #e2e8f0;
+            padding-top: 20px;
+        }
+
+        .btn-prev {
+            background: #f1f5f9;
+            color: #334155;
+            border: 1px solid #cbd5e1;
+            padding: 11px 22px;
+            border-radius: 10px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .btn-prev:hover {
+            background: #e2e8f0;
+        }
+
+        .btn-next {
+            background: var(--primary-green);
+            color: #ffffff;
+            border: none;
+            padding: 11px 24px;
+            border-radius: 10px;
+            font-size: 14px;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.2s;
+            margin-left: auto;
+        }
+
+        .btn-next:hover {
+            background: var(--primary-dark);
+        }
+
+        .auth-alert {
+            padding: 12px 14px;
+            border-radius: 10px;
+            font-size: 13px;
+            line-height: 1.4;
+            margin-bottom: 16px;
+            display: none;
+        }
+
+        .auth-alert.error { background: #fef2f2; color: #991b1b; border: 1px solid #fecaca; }
+        .auth-alert.success { background: #f0fdf4; color: #166534; border: 1px solid #bbf7d0; }
+
+        @media (max-width: 600px) {
+            .form-row, .form-row-3 { grid-template-columns: 1fr; }
+            .wizard-card { padding: 22px 16px; }
+            .step-label { display: none; }
+        }
+    </style>
+</head>
+<body class="onboard-page">
+    <div class="wizard-container">
+        <!-- Top Navigation: Compact 23-Language Selector, Global Speaker & Global Voice Mic -->
+        <div class="auth-top-controls global-top-controls" id="globalTopControls">
+            <div class="lang-selector-compact">
+                <span class="globe-icon" aria-hidden="true">🌐</span>
+                <select id="onboardLanguageSelect" class="lang-selector" aria-label="Select Application Language">
+                    <option value="en">English (English)</option>
+                    <option value="hi">हिन्दी (Hindi)</option>
+                    <option value="te">తెలుగు (Telugu)</option>
+                    <option value="pa">ਪੰਜਾਬੀ (Punjabi)</option>
+                    <option value="ta">தமிழ் (Tamil)</option>
+                    <option value="bn">বাংলা (Bengali)</option>
+                    <option value="mr">मराठी (Marathi)</option>
+                    <option value="gu">ગુજરાતી (Gujarati)</option>
+                    <option value="kn">ಕನ್ನಡ (Kannada)</option>
+                    <option value="ml">മലയാളം (Malayalam)</option>
+                    <option value="or">ଓଡ଼ିଆ (Odia)</option>
+                    <option value="as">অসমীয়া (Assamese)</option>
+                    <option value="ur">اردو (Urdu)</option>
+                    <option value="sa">संस्कृतम् (Sanskrit)</option>
+                    <option value="ne">नेपाली (Nepali)</option>
+                    <option value="kok">कोंकणी (Konkani)</option>
+                    <option value="mai">मैथिली (Maithili)</option>
+                    <option value="doi">डोगरी (Dogri)</option>
+                    <option value="brx">बड़ो (Bodo)</option>
+                    <option value="ks">کٲشُر (Kashmiri)</option>
+                    <option value="sd">سنڌي (Sindhi)</option>
+                    <option value="mni">মৈতৈলোন্ (Manipuri)</option>
+                    <option value="sat">ᱥᱟᱱᱛᱟᱲᱤ (Santali)</option>
+                </select>
+            </div>
+
+            <!-- Right side: Three separate icon-only buttons, aligned horizontally -->
+            <div class="header-controls-right" id="headerControlsRight">
+                <!-- 1. Speaker icon – Text-to-Speech ON/OFF -->
+                <button type="button" id="btnAudioListen" class="header-icon-btn btn-top-control btn-circular-audio btn-speaker-read" aria-label="Speaker ON / OFF" title="Speaker ON - Click to read page content">
+                    <span aria-hidden="true" class="speaker-icon">🔈</span>
+                </button>
+
+                <!-- 2. Pause icon – Pause/Resume speech -->
+                <button type="button" id="btnAudioPause" class="header-icon-btn btn-top-control btn-circular-audio btn-speaker-pause" aria-label="Pause / Resume Speech" title="Pause / Resume" disabled>
+                    <span aria-hidden="true" class="pause-icon">⏸️</span>
+                </button>
+                <button type="button" id="btnAudioMute" style="display:none;" aria-hidden="true" tabindex="-1"></button>
+
+                <!-- 3. Microphone icon – Voice Assistant -->
+                <div class="website-voice-assistant" id="websiteVoiceAssistant" title="Website Voice Control">
+                    <button type="button" id="btnVoiceNavMic" class="header-icon-btn btn-top-control btn-circular-va btn-global-mic" aria-label="Control Website with Voice" title="Voice Control (Click once to record, click again to stop and execute)">
+                        <span aria-hidden="true" class="mic-icon">🎙️</span>
+                        <span class="mic-recording-pulse" id="vaRecordingDot" style="display:none;" aria-hidden="true"></span>
+                    </button>
+                    <span id="vaNavStatusPill" class="va-nav-status-pill" style="display:none;" aria-live="polite">Ready</span>
+                    <span id="btnVoiceSpeakerToggle" style="display:none;" aria-hidden="true">
+                        <span id="vaSpeakerIcon"></span><span id="vaSpeakerBadge"></span>
+                    </span>
+                    <span id="btnVoiceGuide" style="display: none;" aria-hidden="true"></span>
+                    <span id="btnVoiceMic" style="display: none;" aria-hidden="true"></span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Header -->
+        <div class="wizard-header">
+            <div class="brand-badge">
+                <span>🌱</span>
+                <span>First-Time Farmer Setup</span>
+            </div>
+            <h1 id="onboardTitleText" data-i18n="welcomeHeader">Welcome to Smart Irrigation Planner</h1>
+            <p data-i18n="tagline">Grow smarter. Save water. Farm better.</p>
+        </div>
+
+        <!-- Stepper Indicators (Exactly 4 Steps) -->
+        <div class="stepper-nav">
+            <div class="step-item active" data-step="1">
+                <div class="step-circle">1</div>
+                <span class="step-label">Farmer Name</span>
+            </div>
+            <div class="step-item" data-step="2">
+                <div class="step-circle">2</div>
+                <span class="step-label">Farm Location</span>
+            </div>
+            <div class="step-item" data-step="3">
+                <div class="step-circle">3</div>
+                <span class="step-label">Total Land</span>
+            </div>
+            <div class="step-item" data-step="4">
+                <div class="step-circle">4</div>
+                <span class="step-label">Review &amp; Save</span>
+            </div>
+        </div>
+
+        <!-- Wizard Card -->
+        <div class="wizard-card">
+            <div id="onboardAlert" class="auth-alert" role="alert"></div>
+
+            <!-- STEP 1: Farmer Name -->
+            <div class="step-pane active" id="paneStep1">
+                <div class="pane-title"><span>👨‍🌾</span> Farmer Profile</div>
+                <p class="pane-desc">Please confirm your full name to personalize your irrigation forecasts.</p>
+
+                <div class="form-group">
+                    <label class="form-label" for="obFarmerName">Your Full Name *</label>
+                    <input type="text" id="obFarmerName" class="form-input" placeholder="e.g. Gurpreet Singh" value="{{ farmer.name or '' }}" required autofocus>
+                    <input type="hidden" id="onboardFarmerName">
+                </div>
+
+                <div class="wizard-buttons">
+                    <button type="button" class="btn-next" id="btnOnboardNext" onclick="goToStep(2)">Continue to Location →</button>
+                </div>
+            </div>
+
+            <!-- STEP 2: Farm Location -->
+            <div class="step-pane" id="paneStep2">
+                <div class="pane-title"><span>📍</span> Farm Location &amp; GPS Detection</div>
+                <p class="pane-desc">
+                    Real-time weather and crop suitability depend on your actual farm coordinates.
+                    Click below to auto-detect using GPS or select your State and District manually.
+                </p>
+
+                <div class="gps-detect-box">
+                    <button type="button" id="btnDetectGPS" class="btn-detect-gps">
+                        <span>📡</span> Detect Farm Location (GPS)
+                    </button>
+                    <span id="gpsStatusText" class="gps-status-text">Click to request browser location</span>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label class="form-label" for="obState">State / Union Territory *</label>
+                        <select id="obState" class="form-select" required>
+                            <option value="">-- Select Your State --</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label" for="obDistrict">District</label>
+                        <input type="text" id="obDistrict" class="form-input" placeholder="e.g. Patiala" value="{{ farmer.district or '' }}">
+                    </div>
+                </div>
+
+                <div class="form-row-3">
+                    <div class="form-group">
+                        <label class="form-label" for="obVillage">Village / Town</label>
+                        <input type="text" id="obVillage" class="form-input" placeholder="e.g. Nabha" value="{{ farmer.village or '' }}">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label" for="obLat">Latitude</label>
+                        <input type="number" step="any" id="obLat" class="form-input" placeholder="e.g. 30.3753" value="{{ farmer.latitude or '' }}">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label" for="obLon">Longitude</label>
+                        <input type="number" step="any" id="obLon" class="form-input" placeholder="e.g. 76.1520" value="{{ farmer.longitude or '' }}">
+                    </div>
+                </div>
+
+                <div class="wizard-buttons">
+                    <button type="button" class="btn-prev" onclick="goToStep(1)">← Back</button>
+                    <button type="button" class="btn-next" onclick="goToStep(3)">Continue to Land Details →</button>
+                </div>
+            </div>
+
+            <!-- STEP 3: Total Land -->
+            <div class="step-pane" id="paneStep3">
+                <div class="pane-title"><span>🌾</span> Total Agricultural Land</div>
+                <p class="pane-desc">How much total agricultural land do you own or manage at this farm?</p>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label class="form-label" for="obTotalLand">Total Farm Area *</label>
+                        <input type="number" step="0.01" min="0.1" id="obTotalLand" class="form-input" placeholder="e.g. 2.50" value="2.00" required>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label" for="obLandUnit">Land Measurement Unit</label>
+                        <select id="obLandUnit" class="form-select">
+                            <option value="Acres" selected>Acres</option>
+                            <option value="Hectares">Hectares</option>
+                            <option value="Bigha">Bigha</option>
+                            <option value="Guntha">Guntha</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="wizard-buttons">
+                    <button type="button" class="btn-prev" onclick="goToStep(2)">← Back</button>
+                    <button type="button" class="btn-next" onclick="goToStep(4)">Review &amp; Finish →</button>
+                </div>
+            </div>
+
+            <!-- STEP 4: Review & Save (No sections required during onboarding) -->
+            <div class="step-pane" id="paneStep4">
+                <div class="pane-title"><span>✅</span> Review &amp; Complete Setup</div>
+                <p class="pane-desc">Please verify your farm information before opening your live irrigation dashboard.</p>
+
+                <div class="review-box">
+                    <div class="review-row">
+                        <span class="review-label">Farmer Name</span>
+                        <span class="review-value" id="revFarmerName">--</span>
+                    </div>
+                    <div class="review-row">
+                        <span class="review-label">Farm Location</span>
+                        <span class="review-value" id="revLocation">--</span>
+                    </div>
+                    <div class="review-row">
+                        <span class="review-label">Total Land Area</span>
+                        <span class="review-value" id="revTotalLand">--</span>
+                    </div>
+                </div>
+
+                <div class="tip-callout">
+                    <strong>🌾 Manage Cultivated Sections in Your Dashboard:</strong>
+                    Once your farm is saved, you can add, edit, or delete independent crop sections (e.g. Wheat, Potato, or empty plots) directly from <em>Dashboard &rarr; My Farms &rarr; Land Sections</em> at any time.
+                </div>
+
+                <div class="wizard-buttons">
+                    <button type="button" class="btn-prev" onclick="goToStep(3)">← Back</button>
+                    <button type="button" id="btnCompleteOnboarding" class="btn-next" style="background: #059669;">
+                        🌾 Save &amp; Open Farm Dashboard
+                    </button>
+                    <button type="button" id="btnOnboardSave" style="display:none;" onclick="document.getElementById('btnCompleteOnboarding').click()"></button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Scripts -->
+    <script>
+        // WebAuthn domain standardization: seamlessly redirect 127.0.0.1 to localhost
+        if (window.location.hostname === '127.0.0.1') {
+            window.location.replace(window.location.href.replace('://127.0.0.1', '://localhost'));
+        }
+
+        let currentStep = 1;
+        let availableStates = [];
+
+        function showAlert(msg, type = "error") {
+            const el = document.getElementById("onboardAlert");
+            el.className = `auth-alert ${type}`;
+            el.textContent = msg;
+            el.style.display = "block";
+        }
+        function hideAlert() {
+            document.getElementById("onboardAlert").style.display = "none";
+        }
+
+        // Stepper Navigation (Exactly 4 Steps)
+        function goToStep(step) {
+            hideAlert();
+
+            // Validate Step 1
+            if (currentStep === 1 && step > 1) {
+                const name = document.getElementById("obFarmerName").value.trim();
+                if (!name) {
+                    showAlert("Please enter your full name.");
+                    return;
+                }
+            }
+
+            // Validate Step 2
+            if (currentStep === 2 && step > 2) {
+                const state = document.getElementById("obState").value;
+                if (!state) {
+                    showAlert("Please select your State.");
+                    return;
+                }
+            }
+
+            // Validate Step 3
+            if (currentStep === 3 && step > 3) {
+                const total = parseFloat(document.getElementById("obTotalLand").value);
+                if (!total || total <= 0) {
+                    showAlert("Please enter a valid positive total land area.");
+                    return;
+                }
+                updateReviewSummary();
+            }
+
+            currentStep = step;
+
+            // Update UI indicators
+            document.querySelectorAll(".step-item").forEach(item => {
+                const s = parseInt(item.getAttribute("data-step"));
+                item.classList.remove("active", "completed");
+                if (s === currentStep) item.classList.add("active");
+                else if (s < currentStep) item.classList.add("completed");
+            });
+
+            // Update Panes
+            document.querySelectorAll(".step-pane").forEach(p => p.classList.remove("active"));
+            const targetPane = document.getElementById(`paneStep${currentStep}`);
+            if (targetPane) targetPane.classList.add("active");
+        }
+
+        // Load States Dynamically (No default Punjab!)
+        async function loadStates() {
+            try {
+                const res = await fetch("/api/states");
+                const data = await res.json();
+                availableStates = data.states || [];
+                const select = document.getElementById("obState");
+                select.innerHTML = '<option value="">-- Select Your State --</option>';
+                availableStates.forEach(s => {
+                    const opt = document.createElement("option");
+                    opt.value = s;
+                    opt.textContent = s;
+                    select.appendChild(opt);
+                });
+            } catch (e) {
+                console.warn("Could not load states:", e);
+            }
+        }
+
+        // GPS Location Detection
+        document.getElementById("btnDetectGPS").addEventListener("click", () => {
+            const statusEl = document.getElementById("gpsStatusText");
+            if (!navigator.geolocation) {
+                statusEl.textContent = "Geolocation is not supported by your browser.";
+                return;
+            }
+
+            statusEl.textContent = "Requesting GPS permission...";
+            navigator.geolocation.getCurrentPosition(async (pos) => {
+                const lat = pos.coords.latitude;
+                const lon = pos.coords.longitude;
+                document.getElementById("obLat").value = lat.toFixed(5);
+                document.getElementById("obLon").value = lon.toFixed(5);
+                statusEl.textContent = `GPS Detected: ${lat.toFixed(4)}, ${lon.toFixed(4)}. Reverse geocoding...`;
+
+                try {
+                    const revRes = await fetch(`/api/location/reverse?lat=${lat}&lon=${lon}`);
+                    const rev = await revRes.json();
+                    if (rev.state) {
+                        document.getElementById("obState").value = rev.state;
+                    }
+                    if (rev.district) document.getElementById("obDistrict").value = rev.district;
+                    if (rev.village) document.getElementById("obVillage").value = rev.village;
+                    statusEl.textContent = `Location Detected: ${rev.village ? rev.village + ', ' : ''}${rev.district ? rev.district + ', ' : ''}${rev.state || ''} ✓`;
+                } catch (err) {
+                    statusEl.textContent = `Coordinates detected (${lat.toFixed(4)}, ${lon.toFixed(4)}). Please select State manually.`;
+                }
+            }, (err) => {
+                statusEl.textContent = "GPS permission denied or unavailable. Please select State manually.";
+            }, { timeout: 10000, enableHighAccuracy: true });
+        });
+
+        // Summary on Step 4
+        function updateReviewSummary() {
+            const name = document.getElementById("obFarmerName").value.trim();
+            const state = document.getElementById("obState").value.trim();
+            const district = document.getElementById("obDistrict").value.trim();
+            const village = document.getElementById("obVillage").value.trim();
+            const total = document.getElementById("obTotalLand").value.trim();
+            const unit = document.getElementById("obLandUnit").value.trim();
+
+            document.getElementById("revFarmerName").textContent = name || "--";
+            document.getElementById("revLocation").textContent = `${village ? village + ', ' : ''}${district ? district + ', ' : ''}${state}`;
+            document.getElementById("revTotalLand").textContent = `${total} ${unit}`;
+        }
+
+        // Save & Finish Onboarding (Redirects directly to /dashboard)
+        document.getElementById("btnCompleteOnboarding").addEventListener("click", async () => {
+            hideAlert();
+            const btn = document.getElementById("btnCompleteOnboarding");
+            btn.disabled = true;
+            btn.textContent = "Saving Farm Details...";
+
+            const payload = {
+                name: document.getElementById("obFarmerName").value.trim(),
+                state: document.getElementById("obState").value.trim(),
+                district: document.getElementById("obDistrict").value.trim() || null,
+                village: document.getElementById("obVillage").value.trim() || null,
+                latitude: parseFloat(document.getElementById("obLat").value) || null,
+                longitude: parseFloat(document.getElementById("obLon").value) || null,
+                total_land: parseFloat(document.getElementById("obTotalLand").value) || 1.0,
+                unit: document.getElementById("obLandUnit").value || "Acres",
+                sections: [],
+            };
+
+            try {
+                const res = await fetch("/api/farmer/onboarding", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify(payload),
+                });
+                const data = await res.json();
+
+                if (res.ok && data.status === "success") {
+                    showAlert("Farm profile saved! Opening your dashboard...", "success");
+                    setTimeout(() => { window.location.href = data.redirect || "/dashboard"; }, 600);
+                } else {
+                    showAlert(data.error || "Could not save onboarding data.");
+                    btn.disabled = false;
+                    btn.textContent = "🌾 Save & Open Farm Dashboard";
+                }
+            } catch (err) {
+                showAlert("Network error saving onboarding data.");
+                btn.disabled = false;
+                btn.textContent = "🌾 Save & Open Farm Dashboard";
+            }
+        });
+
+        // Initialize
+        loadStates();
+
+        // Prevent back-button viewing of stale onboarding
+        window.addEventListener("pageshow", function(e) {
+            if (e.persisted) window.location.reload();
+        });
+
+        // Mirror obFarmerName to voice selector
+        const obNameInput = document.getElementById("obFarmerName");
+        const obVoiceMirror = document.getElementById("onboardFarmerName");
+        if (obNameInput && obVoiceMirror) {
+            obVoiceMirror.addEventListener("input", () => {
+                obNameInput.value = obVoiceMirror.value;
+            });
+            obNameInput.addEventListener("input", () => {
+                obVoiceMirror.value = obNameInput.value;
+            });
+        }
+    </script>
+
+    <script src="{{ url_for('static', filename='i18n.js') }}"></script>
+    <script src="{{ url_for('static', filename='voice_controller.js') }}"></script>
+</body>
+</html>
